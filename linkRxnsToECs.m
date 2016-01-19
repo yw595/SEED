@@ -1,5 +1,5 @@
-if 1
 if 0
+if 1
 outputDir = '/mnt/extra/SEED';
 filenames = dir(outputDir);
 rxnsToECs = containers.Map;
@@ -7,10 +7,18 @@ ECsToRxns = containers.Map;
 allRxnNames = containers.Map;
 rxnsToMets = containers.Map;
 rxnsToCoeffs = containers.Map;
+FI = fopen([outputDir filesep 'GreenblumECs.txt']);
+GreenblumEC = textscan(FI,'%s\n');
+fclose(FI);
+GreenblumEC = GreenblumEC{1};
+bigModel = struct(); bigModel.S = []; bigModel.rxns = {}; bigModel.mets = {}; bigModel.lb = []; bigModel.ub = []; bigModel.rxnNames = {}; bigModel.metNames = {};
+bigModels = {};
+if ~exist('modelNamesToModels','var')
+    modelNamesToModels = containers.Map;
 end
-for i=810:length(filenames)
-    if ~isempty(regexp(filenames(i).name,'.tsv')) %&& count < 1
-        %count=count+1;
+end
+for i=1:length(filenames)
+    if ~isempty(regexp(filenames(i).name,'.tsv'))
         modelName = filenames(i).name; modelName = modelName(1:regexp(modelName,'.tsv')-1);
         if 1
         status=system(sprintf(['/home/ubuntu/MATLAB/SEED/makeTemp.sh %s %s'],[outputDir filesep modelName '.tsv'],[outputDir filesep modelName '.temp']));
@@ -30,14 +38,6 @@ for i=810:length(filenames)
                 ECNums = arrayfun(@(x,y) line(x:y), regex1,regex2, 'UniformOutput',0);
                 words = strsplit(line,',');
                 rxnName = words{1};
-                if strcmp(rxnName,'rxn00792')
-                    %disp(line)
-                    %disp(regex1)
-                    %disp(ECNums)
-                    if isKey(rxnsToECs,rxnName)
-                        %disp(rxnsToECs(rxnName))
-                    end
-                end
                 if ~isKey(rxnsToECs,rxnName)
                     rxnsToECs(rxnName) = ECNums;
                 else
@@ -50,12 +50,6 @@ for i=810:length(filenames)
                     end
                     temp = unique(temp);
                     rxnsToECs(rxnName) = temp;
-                    % if ~all(ismember(ECNums,rxnsToECs(rxnName)))
-                    %     disp('WARNING: INCONSISTENT EC NUMBERS');
-                    %     temp = unique([ECNums rxnsToECs(rxnName)]);
-                    %     disp(temp);
-                    %     rxnsToECs(rxnName) = temp;
-                    % end 
                 end
                 for j=1:length(ECNums)
                     if ~isKey(ECsToRxns,ECNums{j})
@@ -65,51 +59,158 @@ for i=810:length(filenames)
                         if ~iscell(temp) 
                             temp = {temp};
                         end
-                        %for k=1:length(ECNums)
-                            temp{end+1} = rxnName;
-                            %end
+                        temp{end+1} = rxnName;
                         temp = unique(temp);
                         ECsToRxns(ECNums{j}) = temp;
-                        % if ~all(ismember(ECNums,rxnsToECs(rxnName)))
-                        %     disp('WARNING: INCONSISTENT EC NUMBERS');
-                        %     temp = unique([ECNums rxnsToECs(rxnName)]);
-                        %     disp(temp);
-                        %     rxnsToECs(rxnName) = temp;
-                        % end 
                     end
                 end
             end
             line = fgetl(FI);
         end
-        %disp(count)
         fclose(FI);
         end
         
-        if count > 10
-            %if ~exist(strrep(modelName,'.','_'),'var')
-                modelTemp = readCbModel([outputDir filesep modelName '.xml']);
-                %eval([strrep(modelName,'.','_') ' = modelTemp;']);
-                %end
-                %modelTemp = eval(strrep(modelName,'.','_'));
-            %notInAll = find(~isKey(allRxnNames,modelTemp.rxns));
-            %notInAll = find(~ismember(modelTemp.rxns,));
+        if count > 10 && ~strcmp(modelName,'iAbaylyiv4') && ~strcmp(modelName,'iSB619')
+            if ~isKey(modelNamesToModels,strrep(modelName,'.','_'))
+                if isempty(regexp(modelName,'^i.*$'))
+                    modelTemp = readCbModel([outputDir filesep modelName '.xml']);
+                else
+                    modelTemp = readCbModel([outputDir filesep modelName '_4.xml']);
+                end
+                modelNamesToModels(strrep(modelName,'.','_')) = modelTemp;
+            else
+                modelTemp = modelNamesToModels(strrep(modelName,'.','_'));
+            end
             for j=1:length(modelTemp.rxns)
-                %notMets = modelTemp.mets(modelTemp.S(:,notInAll(j))~=0);
-                %notCoeffs = modelTemp.S(:,modelTemp.S(:,notInAll(j))~=0);
-                rxnsToMets(modelTemp.rxns{j}) = modelTemp.mets(modelTemp.S(:,j)~=0);
-                rxnsToCoeffs(modelTemp.rxns{j}) = modelTemp.S(modelTemp.S(:,j)~=0,j);
-            end           
+                if ~any(strcmp(bigModel.rxns,modelTemp.rxns{j})) && isKey(rxnsToECs,modelTemp.rxns{j}) && any(ismember(GreenblumEC,rxnsToECs(modelTemp.rxns{j})))
+                    bigModel.rxns{end+1} = modelTemp.rxns{j};
+                    bigModel.rxnNames{end+1} = modelTemp.rxnNames{j};
+                    mets = modelTemp.mets(modelTemp.S(:,j)~=0);
+                    metNames = modelTemp.metNames(modelTemp.S(:,j)~=0);
+                    coeffs = modelTemp.S(modelTemp.S(:,j)~=0,j);
+                    for k=1:length(mets)
+                        if ~any(strcmp(bigModel.mets,mets{k}))
+                            bigModel.mets{end+1} = mets{k};
+                            bigModel.metNames{end+1} = metNames{k};
+                        end
+                        bigModel.S(strcmp(bigModel.mets,mets{k}),strcmp(bigModel.rxns,modelTemp.rxns{j})) = coeffs(k);
+                        bigModel.lb(strcmp(bigModel.rxns,modelTemp.rxns{j})) = modelTemp.lb(j);
+                        bigModel.ub(strcmp(bigModel.rxns,modelTemp.rxns{j})) = modelTemp.ub(j);
+                    end
+                end
+            end
+            bigModels{end+1} = bigModel;
         end
     end
 end
 end
 
-if 0
-FI = fopen([outputDir filesep 'GreenblumECs.txt']);
-GreenblumEC = textscan(FI,'%s\n');
+connMatrix = makeConnMatrix(bigModel);
+cents = betweenness_centrality(sparse(connMatrix));
+
+bigModel = addMustEx(bigModel);
+
+allModels = keys(modelNamesToModels);
+biomassMets = {}; biomassCoeffs = [];
+for i=1:length(allModels);
+    modelTemp = modelNamesToModels(allModels{i});
+    biomassIdxs = find(cellfun(@(x) ~isempty(regexpi(x,'(biomass|grow)')),modelTemp.rxnNames));
+    if ~isempty(biomassIdxs)
+        for j=1:length(biomassIdxs)
+            biomassMetIdxs = find(modelTemp.S(:,biomassIdxs(j))~=0);
+            for k=1:length(biomassMetIdxs);
+                if any(strcmp(modelTemp.mets{biomassMetIdxs(k)},bigModel.mets))
+                    biomassMets{end+1} = modelTemp.mets{biomassMetIdxs(k)};
+                    biomassCoeffs(end+1) = modelTemp.S(biomassMetIdxs(k),biomassIdxs(j));
+                end
+            end
+        end
+    end
+end
+[biomassMets uniqIdxs ~] = unique(biomassMets);
+biomassCoeffs = biomassCoeffs(uniqIdxs);
+
+modelNamesToModelsKeys = keys(modelNamesToModels);
+for i=1:length(modelNamesToModelsKeys)
+    modelTemp = modelNamesToModels(modelNamesToModelsKeys{i});
+    diffnums(i) = length(setdiff(modelTemp.rxns,bigModel.rxns));
+end
+[~, minIdx] = min(diffnums);
+bigModelAdded = bigModel;
+bigModelAdded=mergeModels(bigModelAdded,modelNamesToModels(modelNamesToModelsKeys{minIdx}));
+
+sols = {};
+cumulative = 0;
+for i=1:length(biomassMets)
+    disp(i)
+    if i==1 | ~cumulative
+        bigModelBio = bigModelAdded;
+        bigModelBio.lb = bigModelBio.lb';
+        bigModelBio.ub = bigModelBio.ub';
+        bigModelBio.rxns{end+1} = 'BIOMASS';
+        bigModelBio.rxnNames{end+1} = 'BIOMASS';
+        biomassIdx = length(bigModelBio.rxns);
+    end
+    bigModelBio.S(ismember(bigModelBio.mets,biomassMets{i}),biomassIdx) = biomassCoeffs(i);
+    bigModelBio.lb(biomassIdx)=-1000;bigModelBio.ub(biomassIdx)=1000;
+    bigModelBio.c = zeros(length(bigModelBio.rxns),1);
+    %bigModelBio.c(end) = 1;
+    bigModelBio = changeObjective(bigModelBio,'BIOMASS');
+    sols{end+1} = optimizeCbModel(bigModelBio);
+end
+
+xvals = 1:length(sols); titleString = 'biomassMetProd'; yvals = []; outputDir= '/home/ubuntu/MATLAB/SEED';
+for i=1:length(sols)
+    yvals(i) = sols{i}.f;
+end
+disp(sum(yvals>0)/length(yvals))
+xlabels = {};
+for i=1:length(biomassMets)
+    xlabels{i} = bigModel.metNames{strcmp(bigModel.mets,biomassMets{i})};
+    temp = xlabels{i};
+    xlabels{i} = temp(1:min(10,length(temp)));
+end
+makeBar(xvals,yvals,titleString,outputDir,'ylabelString','Flux','xlabelString','Metabolite','xlabels',xlabels);
+
+xvals = 1:length(bigModels); titleString = 'numRxnsAdded'; yvals = cellfun(@(x) length(x.rxns), bigModels); outputDir= '/home/ubuntu/MATLAB/SEED';
+xlabels = {};
+for i=1:length(bigModels)
+    xlabels{i} = num2str(i);
+end
+makeBar(xvals,yvals,titleString,outputDir,'ylabelString', 'numRxns','xlabelString','Model Number','xlabels',xlabels);
+
+FI = fopen('/home/ubuntu/Downloads/testEC2.txt');
+dataFields = textscan(FI,'%s%s','Delimiter',' ');
 fclose(FI);
-GreenblumEC = GreenblumEC{1};
-bigModel = struct(); bigModel.S = []; bigModel.rxns = {}; bigModel.mets = {};
+dataFields = [dataFields{:}];
+ECs = keys(ECsToRxns);
+rxnsToExpress = containers.Map;
+for i=1:length(ECs)
+    matchIdx = strcmp(dataFields(:,1),ECs{i});
+    matchIdx = find(matchIdx);
+    if matchIdx > 0
+        rxns = ECsToRxns(ECs{i});
+        if ~iscell(rxns)
+            rxns = {rxns};
+        end
+        for j=1:length(rxns)
+            rxnsToExpress(rxns{j}) = str2num(dataFields{matchIdx,2});
+        end
+    end
+end
+xvals = cents(1:length(bigModel.rxns)); titleString = 'Total Expression Vs. Centrality';
+yvals = [];
+for i=1:length(xvals)
+    if isKey(rxnsToExpress,bigModel.rxns{i})
+        yvals(i) = rxnsToExpress(bigModel.rxns{i});
+    else
+        yvals(i) = 0;
+    end
+end
+outputDir= '/home/ubuntu/MATLAB/SEED';
+makeBar(xvals,yvals,titleString,outputDir,'ylabelString', 'Total Expression','xlabelString','Centrality','isScatter',1);
+
+if 0
 ECs = keys(ECsToRxns);
 for i=1:length(ECs)
     if any(strcmp(ECs{i},GreenblumEC))
@@ -118,7 +219,7 @@ for i=1:length(ECs)
             rxns = {rxns};
         end
         for j=1:length(rxns)
-            if ~any(strcmp(bigModel.rxns,rxns{j}))
+            if ~any(strcmp(bigModel.rxns,rxns{j})) && isKey(rxnsToMets,rxns{j})
                 bigModel.rxns{end+1} = rxns{j};
                 mets = rxnsToMets(rxns{j});
                 coeffs = rxnsToCoeffs(rxns{j});
@@ -133,24 +234,3 @@ for i=1:length(ECs)
     end
 end
 end
-            
-% ECsToRxns = containers.Map;
-% rxnsToECsKeys = keys(rxnsToECs);
-% for i=1:length(rxnsToECsKeys)
-%     temp1 = rxnsToECsKeys{i};
-%     temp2 = rxnsToECs(rxnsToECsKeys{i}); %temp2 = temp2{1};
-%     for j = 1:length(temp2)
-%         temp3 = temp2{j};
-%         %disp(i); disp(temp1); disp(temp3);
-%         if isKey(ECsToRxns,temp3)
-%             ECsToRxns(temp3) = temp1;
-%         else
-%             if ~all(ismember(temp1,ECsToRxns(temp3)))
-%                 disp('WARNING: INCONSISTENT RXN NAMES');
-%                 temp = unique([temp1 ECsToRxns(temp3)]);
-%                 disp(temp);
-%                 ECsToRxns(temp3) = temp;
-%             end
-%         end
-%     end
-% end

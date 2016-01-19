@@ -1,0 +1,16 @@
+*~
+*.mat
+*.pptx
+*.gct
+*.jar
+*.png
+*.zip
+*.html
+*.gz
+*.tgz
+*._*
+*.xls
+*.bak
+.Rhistory
+output/
+matlab_bgl/
