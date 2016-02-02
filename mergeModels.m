@@ -1,10 +1,16 @@
-function returnModel = mergeModels(origModel,modelTemp)
+function returnModel = mergeModels(origModel,modelTemp,specificRxn)
 
 returnModel = origModel;
 for j=1:length(modelTemp.rxns)
-    if ~any(strcmp(returnModel.rxns,modelTemp.rxns{j})) 
+    if exist('specificRxn','var')
+        matchRxn = strcmp(modelTemp.rxns{j},specificRxn);
+    else
+        matchRxn = 1;
+    end
+    if ~any(strcmp(returnModel.rxns,modelTemp.rxns{j})) && matchRxn
         returnModel.rxns{end+1} = modelTemp.rxns{j};
         returnModel.rxnNames{end+1} = modelTemp.rxnNames{j};
+        returnModel.subSystems{end+1} = modelTemp.subSystems{j};
         mets = modelTemp.mets(modelTemp.S(:,j)~=0);
         metNames = modelTemp.metNames(modelTemp.S(:,j)~=0);
         coeffs = modelTemp.S(modelTemp.S(:,j)~=0,j);
