@@ -10,12 +10,12 @@ GreenblumEC = GreenblumEC{1};
 if ~exist('CobraLPSolver','var')
     %initCobraToolbox;
 end
-if exist([outputDir filesep 'makeBigModelAccum' filesep 'makeBigModelAccum.mat'],'file')
+if exist([outputDir filesep 'makeBigModelAccum' filesep 'makeBigModelAccum.mat'],'file') && ~exist('bigModelAccum','var')
     load([outputDir filesep 'makeBigModelAccum' filesep 'makeBigModelAccum.mat'],'bigModelAccum','bigModelsAccum','modelNamesToModels','rxnsToECsAccum','ECsToRxnsAccum');
 end
-if exist([outputDir filesep 'makeBigModelTable' filesep 'makeBigModelTable.mat'],'file')
+if exist([outputDir filesep 'makeBigModelTable' filesep 'makeBigModelTable.mat'],'file') && ~exist('bigModelTable','var')
     load([outputDir filesep 'makeBigModelTable' filesep 'makeBigModelTable.mat'],'bigModelTable','rxnsToECsTable','ECsToRxnsTable');
 end
-if exist([outputDir filesep 'readMD5Express' filesep 'readMD5Express.mat'],'file')
+if exist([outputDir filesep 'readMD5Express' filesep 'readMD5Express.mat'],'file') && ~exist('rxnsToExpressObese','var')
     load([outputDir filesep 'readMD5Express' filesep 'readMD5Express.mat'],'rxnsToExpressObese','rxnsToExpressNorm','rxnsToExpressNormKeys','rxnsToDiffExp');
 end

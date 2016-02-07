@@ -31,7 +31,16 @@ for i=1:length(rxnIDs)
         disp(i)
         disp(length(bigModelTable.rxns));
     end
-    if ~any(strcmp(rxnIDs{i},bigModel.rxns)) && isKey(rxnsToECsTable,rxnIDs{i}) && any(ismember(GreenblumEC,rxnsToECsTable(rxnIDs{i}))) && ~any(i==badIdxs)
+    if ~any(strcmp(rxnIDs{i},bigModelTable.rxns)) && (~isempty(regexp(rxnNames{i},'EX')) || ~isempty(regexpi(rxnNames{i},'transport')))
+        [metList coeffList revFlag] = parseRxnFormula(equations{i});
+        bigModelTable = addReaction(bigModelTable,rxnIDs{i}, metList,coeffList,revFlag);
+        if ~isempty(regexp(rxnNames{i},'EX'))
+            bigModelTable.subSystems{end} = 'Exchange';
+        else
+            bigModelTable.subSystems{end} = 'Transport';
+        end
+    end
+    if ~any(strcmp(rxnIDs{i},bigModelTable.rxns)) && isKey(rxnsToECsTable,rxnIDs{i}) && any(ismember(GreenblumEC,rxnsToECsTable(rxnIDs{i}))) && ~any(i==badIdxs)
         [metList coeffList revFlag] = parseRxnFormula(equations{i});
         bigModelTable = addReaction(bigModelTable,rxnIDs{i}, metList,coeffList,revFlag);
     end

@@ -1,17 +1,17 @@
-configSEED;
+%configSEED;
 outputDir1 = [outputDir filesep 'rxnCentVsDiffExp'];
 if ~exist(outputDir1,'dir')
     mkdir(outputDir1);
 end
-connMatrixTable = makeConnMatrix(bigModelTable);
-rxnMatrix = zeros(length(bigModelTable.rxns),length(bigModelTable.rxns));
+connMatrixTable = makeConnMatrix(bigModel);
+rxnMatrix = zeros(length(bigModel.rxns),length(bigModel.rxns));
 [~, topMetIdxs] = sort(sum(bigModelTable.S~=0,2),'descend');
 topMetIdxs = topMetIdxs(1:floor(length(topMetIdxs)*.001));
-for i=1:length(bigModelTable.rxns)
-    metIdxs = find(bigModelTable.S(:,i)~=0);
+for i=1:length(bigModel.rxns)
+    metIdxs = find(bigModel.S(:,i)~=0);
     for j=1:length(metIdxs)
         if ~any(metIdxs(j)==topMetIdxs)
-            connRxnIdxs = find(bigModelTable.S(metIdxs(j),:));
+            connRxnIdxs = find(bigModel.S(metIdxs(j),:));
             for k=1:length(connRxnIdxs)
                 rxnMatrix(i,k)=1;
             end
