@@ -8,7 +8,9 @@ rxnsToECsAccum = containers.Map;
 ECsToRxnsAccum = containers.Map;
 bigModelAccum = makeEmptyModel();
 bigModelsAccum = {};
-modelNamesToModels = containers.Map;
+if ~exist('modelNamesToModels','var')
+    modelNamesToModels = containers.Map;
+end
 for i=1:length(filenames)
     if ~isempty(regexp(filenames(i).name,'.tsv'))
         modelName = filenames(i).name; modelName = modelName(1:regexp(modelName,'.tsv')-1);
@@ -47,6 +49,10 @@ for i=1:length(filenames)
                 modelTemp = modelNamesToModels(strrep(modelName,'.','_'));
             end
             for j=1:length(modelTemp.rxns)
+                if ~any(strcmp(bigModelAccum.rxns,modelTemp.rxns{j})) && (~isempty(regexp(modelTemp.rxnNames{j},'EX')) || ~isempty(regexpi(modelTemp.rxnNames{j},'transport')))
+                    bigModelAccum = mergeModels(bigModelAccum,modelTemp,modelTemp.rxns{j});
+                    bigModelAccum = checkModelDims(bigModelAccum);
+                end
                 if ~any(strcmp(bigModelAccum.rxns,modelTemp.rxns{j})) && isKey(rxnsToECsAccum,modelTemp.rxns{j}) && any(ismember(GreenblumEC,rxnsToECsAccum(modelTemp.rxns{j})))
                     bigModelAccum = mergeModels(bigModelAccum,modelTemp,modelTemp.rxns{j});
                     bigModelAccum = checkModelDims(bigModelAccum);
@@ -56,4 +62,4 @@ for i=1:length(filenames)
         end
     end
 end
-saveas([outputDir1 filesep 'makeBigModelAccum.mat'],'bigModelAccum','bigModelsAccum','modelNamesToModels','rxnsToECsAccum','ECsToRxnsAccum');
+save([outputDir1 filesep 'makeBigModelAccum.mat'],'bigModelAccum','bigModelsAccum','modelNamesToModels','rxnsToECsAccum','ECsToRxnsAccum');

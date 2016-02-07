@@ -3,8 +3,8 @@ outputDir1 = [outputDir filesep 'readMD5Express'];
 if ~exist(outputDir1,'dir')
     mkdir(outputDir1);
 end
-rxnsToExpressObese = mapExpToRxns(ECsToRxns,[baseDir filesep 'testObese.txt']);
-rxnsToExpressNorm = mapExpToRxns(ECsToRxns,[baseDir filesep 'testNorm.txt']);
+rxnsToExpressObese = mapExpToRxns(ECsToRxnsTable,[baseDir filesep 'testObese.txt']);
+rxnsToExpressNorm = mapExpToRxns(ECsToRxnsTable,[baseDir filesep 'testNorm.txt']);
 rxnsToDiffExp = containers.Map;
 rxnsToExpressNormKeys = keys(rxnsToExpressNorm);
 for i=1:length(rxnsToExpressNormKeys)

@@ -11,6 +11,7 @@ for i=1:length(newModel.mets)
         cleanedMetName = strrep(strrep(newModel.mets{i},']',')'),'[','(');
         newModel.rxns{end+1} = ['MUST_EX_' cleanedMetName];
         newModel.rxnNames{end+1} = ['MUST_EX_' cleanedMetName];
+        newModel.subSystems{end+1} = 'MUST_EX';
         newModel.S(i,end+1) = 1;
         newModel.lb(end+1) = -1000;
         newModel.ub(end+1) = 1000;
