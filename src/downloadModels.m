@@ -1,3 +1,4 @@
+configSEED;
 outputDir1 = [inputDir filesep 'SEEDModels'];
 FI = fopen([inputDir filesep 'allModels.txt']);
 dataFields = textscan(FI,'%s','Delimiter','\n');
@@ -18,7 +19,7 @@ for i=1:length(dataFields)
         end
         disp(dispString);
     else        
-        status=system(sprintf('curl --data "model=%s&file=XLS" seed-viewer.theseed.org/ModelSEEDdownload.cgi > %s',dataFields{i},[outputDir1 filesep dataFields{i} '.xls']));
-        status=system(sprintf('curl --data "model=%s&file=SBML" seed-viewer.theseed.org/ModelSEEDdownload.cgi > %s',dataFields{i},[outputDir1 filesep dataFields{i} '.xml']));
+        status=system(sprintf('curl --data "model=%s&file=XLS" seed-viewer.theseed.org/ModelSEEDdownload.cgi > %s',dataFields{i},[outputDir1 filesep dataFields{i} 'test.xls']));
+        status=system(sprintf('curl --data "model=%s&file=SBML" seed-viewer.theseed.org/ModelSEEDdownload.cgi > %s',dataFields{i},[outputDir1 filesep dataFields{i} 'test.xml']));
     end
 end

@@ -4,11 +4,14 @@ if ~exist(outputDir1,'dir')
     mkdir(outputDir1);
 end
 filenames = dir(modelsDir);
+filenames = filenames(randperm(length(filenames)));
 rxnsToECsAccum = containers.Map;
 ECsToRxnsAccum = containers.Map;
 bigModelAccum = makeEmptyModel();
 bigModelsAccum = {};
-if ~exist('modelNamesToModels','var')
+reloadModels = 0;
+IGNOREDASH = 1;
+if ~exist('modelNamesToModels','var') || reloadModels
     modelNamesToModels = containers.Map;
 end
 for i=1:length(filenames)
@@ -26,10 +29,14 @@ for i=1:length(filenames)
                 disp(line)
             end
             count = count+1;
-            [regex1 regex2] = regexp(line,'(\d|-)+\.(\d|-)+\.(\d|-)+\.(\d|-)+');
+            if ~IGNOREDASH
+                [regex1 regex2] = regexp(line,'(\d|-)+\.(\d|-)+\.(\d|-)+\.(\d|-)+');
+            else
+                [regex1 regex2] = regexp(line,'(\d)+\.(\d)+\.(\d)+\.(\d)+');
+            end
             if ~isempty(regex1) 
                 ECNums = arrayfun(@(x,y) line(x:y), regex1,regex2, 'UniformOutput',0);
-                words = strsplit(line,',');
+                words = strsplitYiping(line,',');
                 rxnName = words{1};
                 [rxnsToECsAccum ECsToRxnsAccum] = updateTwoMaps(rxnsToECsAccum, ECsToRxnsAccum, rxnName, ECNums);
             end
@@ -42,19 +49,28 @@ for i=1:length(filenames)
                 if isempty(regexp(modelName,'^i.*$'))
                     modelTemp = readCbModel([modelsDir filesep modelName '.xml']);
                 else
-                    modelTemp = readCbModel([modelsDir filesep modelName '_4.xml']);
+                    modelTemp = readCbModel([modelsDir filesep modelName '_3.xml']);
                 end
                 modelNamesToModels(strrep(modelName,'.','_')) = modelTemp;
             else
                 modelTemp = modelNamesToModels(strrep(modelName,'.','_'));
             end
+            %strip off compartments for compatibility with bigModelTable
+            for j=1:length(modelTemp.mets)
+                bracketIdx = regexp(modelTemp.mets{j},'\[c\]');
+                if ~isempty(bracketIdx)
+                    modelTemp.mets{j} = modelTemp.mets{j}(1:bracketIdx-1);
+                end
+            end
             for j=1:length(modelTemp.rxns)
                 if ~any(strcmp(bigModelAccum.rxns,modelTemp.rxns{j})) && (~isempty(regexp(modelTemp.rxnNames{j},'EX')) || ~isempty(regexpi(modelTemp.rxnNames{j},'transport')))
                     bigModelAccum = mergeModels(bigModelAccum,modelTemp,modelTemp.rxns{j});
+                    bigModelAccum.rxnECNums{strcmp(bigModelAccum.rxns,modelTemp.rxns{j})} = {};
                     bigModelAccum = checkModelDims(bigModelAccum);
                 end
                 if ~any(strcmp(bigModelAccum.rxns,modelTemp.rxns{j})) && isKey(rxnsToECsAccum,modelTemp.rxns{j}) && any(ismember(GreenblumEC,rxnsToECsAccum(modelTemp.rxns{j})))
                     bigModelAccum = mergeModels(bigModelAccum,modelTemp,modelTemp.rxns{j});
+                    bigModelAccum.rxnECNums{strcmp(bigModelAccum.rxns,modelTemp.rxns{j})} = rxnsToECsAccum(modelTemp.rxns{j});
                     bigModelAccum = checkModelDims(bigModelAccum);
                 end
             end
@@ -62,4 +78,8 @@ for i=1:length(filenames)
         end
     end
 end
-save([outputDir1 filesep 'makeBigModelAccum.mat'],'bigModelAccum','bigModelsAccum','modelNamesToModels','rxnsToECsAccum','ECsToRxnsAccum');
+bigModelsAccumSubsystems = cellfun(@(x) x.subSystems,bigModelsAccum,'UniformOutput',0);
+save([outputDir1 filesep 'extra.mat'],'bigModelsAccumSubsystems');
+save([outputDir1 filesep 'makeBigModelAccum.mat'],'bigModelAccum', ...
+     'modelNamesToModels','rxnsToECsAccum','ECsToRxnsAccum','bigModelsAccum');
+

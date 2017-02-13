@@ -25,15 +25,18 @@ for i=1:length(compares1)
     xvals = 1:10; yvals = [SSAbsDiffs1TopTen SSAbsDiffs2TopTen];
     legendLabels = legendLabelsArray{i};
     makeBar(xvals,yvals,titleString,outputDir,'ylabelString','Flux','xlabelString','Subsystem','xlabels',SSAbsDiffsTopTenNames,'legendLabels',legendLabels);
+    writeForGGPlot(xvals,yvals,[outputDir filesep strrep(titleString,' ','_') '.txt'],SSAbsDiffsTopTenNames,legendLabels);
 end
 
 xvals = normFluxesNormal(:,2); yvals = normFluxesNormal(:,3)/max(normFluxesNormal(:,3)); titleString = 'Normal FALCON Vs EFluxes';
 makeBar(xvals,yvals,titleString,outputDir,'ylabelString','FALCON Flux','xlabelString','EFlux','isScatter',1);
+writeForGGPlot(xvals,yvals,[outputDir filesep 'Normal_FALCON_Vs_EFluxes.txt']);
 end
 
 if 0
+configSEED;
 bigModelsAppend = bigModelsAccum; bigModelsAppend{end+1}=bigModelTable;
-xvals = 1:length(bigModelsAppend)+5; yvals = zeros(length(bigModelsAppend)+5,4); titleString = 'subSystemsAdded'; xlabels = {};
+xvals = 1:length(bigModelsAppend)+5; yvals = zeros(length(bigModelsAppend)+5,4); titleString = 'Reactions Added Per Model'; xlabels = {};
 legendLabels = {'numNormal','numExch','numTrans','numUnclass'};
 for i=1:length(bigModelsAppend)
     numUnclass = sum(strcmp(bigModelsAppend{i}.subSystems,''));
@@ -53,22 +56,32 @@ for i=1:5
     xlabels{end+1}='';
 end
 makeBar(xvals,yvals,titleString,outputDir,'ylabelString','Num Reactions','xlabelString','Model','xlabels',xlabels,'isStackBar',1,'legendLabels',legendLabels);
+xlabels1 = keys(modelNamesToModels);
+xlabels1{end+1} = 'Added All Model SEED Rxns';
+for i=1:length(xlabels1)
+    paddedIdx = num2str(i);
+    while length(paddedIdx)<3
+        paddedIdx = ['0' paddedIdx];
+    end
+    xlabels1{i} = [paddedIdx '_' xlabels1{i}];
+end
+writeForGGPlot(xvals(1:end-5),yvals(1:end-5,:),[outputDir filesep 'Reactions_Added_Per_Model.txt'],xlabels1,legendLabels);
 end
 
-if 0
+if 1
 writeOutModel(bigModelTableTest,[outputDir filesep 'bigModelTableTest.txt']);
 
-bigModel = bigModelTable;
+%bigModel = bigModelTable;
 
-connMatrix = makeConnMatrix(bigModel);
-cents = betweenness_centrality(sparse(connMatrix));
+%connMatrix = makeConnMatrix(bigModel);
+%cents = betweenness_centrality(sparse(connMatrix));
 
-bigModel = addMustEx(bigModel);
+%bigModel = addMustEx(bigModel);
 
 [biomassMets biomassCoeffs] = makeMergedBiomass(values(modelNamesToModels),bigModel.mets);
 
 modelNamesToModelsValues = values(modelNamesToModels);
-bigModelAdded = mergeSmallest(bigModel,modelNamesToModelsValues);
+%bigModelAdded = mergeSmallest(bigModel,modelNamesToModelsValues);
 
 sols = testBiomass(bigModelAdded,biomassMets,biomassCoeffs,0);
 
@@ -85,21 +98,21 @@ for i=1:length(biomassMets)
 end
 makeBar(xvals,yvals,titleString,outputDir,'ylabelString','Flux','xlabelString','Metabolite','xlabels',xlabels);
 
-xvals = 1:length(bigModels); titleString = 'numRxnsAdded'; yvals = cellfun(@(x) length(x.rxns), bigModels);
-xlabels = {};
-for i=1:length(bigModels)
-    xlabels{i} = num2str(i);
-end
-makeBar(xvals,yvals,titleString,outputDir,'ylabelString', 'numRxns','xlabelString','Model Number','xlabels',xlabels);
+% xvals = 1:length(bigModels); titleString = 'numRxnsAdded'; yvals = cellfun(@(x) length(x.rxns), bigModels);
+% xlabels = {};
+% for i=1:length(bigModels)
+%     xlabels{i} = num2str(i);
+% end
+% makeBar(xvals,yvals,titleString,outputDir,'ylabelString', 'numRxns','xlabelString','Model Number','xlabels',xlabels);
 
-rxnsToExpress = mapExpToRxns(ECsToRxns,[baseDir filesep 'testEC3.txt']);
-titleString = 'Total Expression Vs. Centrality';
-yvals = []; xvals = [];
-for i=1:length(bigModel.rxns)
-    if isKey(rxnsToExpress,bigModel.rxns{i})
-        yvals(end+1) = rxnsToExpress(bigModel.rxns{i});
-        xvals(end+1) = cents(i);
-    end
-end
-makeBar(xvals,yvals,titleString,outputDir,'ylabelString', 'Total Expression','xlabelString','Centrality','isScatter',1);
+% rxnsToExpress = mapExpToRxns(ECsToRxns,[baseDir filesep 'testEC3.txt']);
+% titleString = 'Total Expression Vs. Centrality';
+% yvals = []; xvals = [];
+% for i=1:length(bigModel.rxns)
+%     if isKey(rxnsToExpress,bigModel.rxns{i})
+%         yvals(end+1) = rxnsToExpress(bigModel.rxns{i});
+%         xvals(end+1) = cents(i);
+%     end
+% end
+% makeBar(xvals,yvals,titleString,outputDir,'ylabelString', 'Total Expression','xlabelString','Centrality','isScatter',1);
 end

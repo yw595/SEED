@@ -1,0 +1,1 @@
+grep -Po "KEGG Compound ID(.)*C(\d)(\d)(\d)(\d)(\d)" HMDB.html > KEGG.txt
