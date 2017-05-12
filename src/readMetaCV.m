@@ -10,6 +10,10 @@ for i=1:length(dataFields)
     ko2ec(ko) = ecs;
 end
 
+useHadza = 0; useMatsumoto = 1;
+
+if useHadza
+    
 inputFI2 = fopen('/home/fs01/yw595/manualmetmap.txt');
 dataFields = textscan(inputFI2,'%s%s','Delimiter','|','HeaderLines',0);
 fclose(inputFI2);
@@ -26,6 +30,20 @@ dataFields = [dataFields{:}];
 metsToAbunds = containers.Map;
 for i=1:length(dataFields)
     metsToAbunds(dataFields{i,1}) = [str2num(dataFields{i,3}), str2num(dataFields{i,4})];
+end
+end
+
+if useMatsumoto
+    inputFI3 = fopen('/home/fs01/yw595/matsumotometabolomesupp.txt');
+    dataFields = textscan(inputFI3,'%s%s%s%s','Delimiter','|','HeaderLines',0);
+    fclose(inputFI3);
+    dataFields = [dataFields{:}];
+    metsToAbunds = containers.Map;
+    metsToIDs = containers.Map;
+    for i=1:length(dataFields)
+        metsToIDs(dataFields{i,1}) = dataFields{i,4};
+        metsToAbunds(dataFields{i,1}) = [str2num(dataFields{i,2}), str2num(dataFields{i,3})];
+    end
 end
 
 ecs = {}; ecAbunds = [];

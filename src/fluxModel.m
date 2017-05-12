@@ -3,7 +3,7 @@ xenoData = textscan(fopen('/home/fs01/yw595/MATLAB/SEED/input/xenobiotics/GSM935
 metabolomeData = textscan(fopen('/home/fs01/yw595/MATLAB/SEED/input/fecalmicrobiomeauto.txt'),'%s%s','Delimiter','\t','HeaderLines',0);
 hadzaData = textscan(fopen('/home/fs01/yw595/output3.EC.txt'),'%s%s','Delimiter','\t','HeaderLines',0);
 
-if 1
+if 0 
 configSEED;
 rxnsToExpressObeseKeys = keys(rxnsToExpressObese);
 
@@ -29,7 +29,7 @@ bigModelTableFlux.metKEGGs = bigModelReconc.metKEGGs;
 end
 
 if 0
-bigModelTableFlux = bigModelTableFluxSave;
+    %bigModelTableFlux = bigModelTableFluxSave;
 bigModelTableFluxRestrict = bigModelTableFlux;
 for i=1:length(bigModelTableFluxRestrict.rxns)
     if strcmp(bigModelTableFluxRestrict.subSystems{i},'Transport') || strcmp(bigModelTableFluxRestrict.subSystems{i},'Exchange')
@@ -39,8 +39,9 @@ for i=1:length(bigModelTableFluxRestrict.rxns)
 end
 bigModelTableFlux = bigModelTableFluxRestrict;
 end
+
 bigModelTableFluxSave = bigModelTableFlux;
-if 1
+if 0
 fecalMet = metabolomeData{2};
 fecalMet = fecalMet(~strcmp(fecalMet,''));
 fecalMet = cellfun(@(x) ['C' x], fecalMet, 'UniformOutput', 0);
@@ -59,12 +60,14 @@ for i=1:length(bigModelTableFluxRestrict.rxns)
 end
 bigModelTableFlux = bigModelTableFluxRestrict;
 end
-if 1
+
+if 0
 normFluxesNormalArr = {};
-useERP = 0;
+normFluxesObeseArr = {};
+useERP = 1;
 useXeno = 0;
-useHadza = 1;
-for z1=1:2
+useHadza = 0;
+for z1=1:10
 zLim = 2;
 if useXeno==1 or useHadza==1
     zLim = 1;
@@ -148,6 +151,7 @@ for z=1:zLim
         normFluxesNormalArr{z1} = normFluxesNormal;
     else
         normFluxesObese = normFluxes;
+        normFluxesObeseArr{z1} = normFluxesObese;
     end
 end
 end
@@ -158,6 +162,22 @@ convertArr = [];
 for i=1:length(normFluxesNormalArr)
     convertArr(i,:,:) = normFluxesNormalArr{i};
 end
+if useERP
+convertArrObese = [];
+for i=1:length(normFluxesObeseArr)
+    convertArrObese(i,:,:) = normFluxesObeseArr{i};
+end
+end
+FBAMeanNorm = mean(convertArr(:,:,1),1);
+EFluxMeanNorm = mean(convertArr(:,:,2),1);
+FALCONMeanNorm = mean(convertArr(:,:,3),1);
+GXFBAMeanNorm = mean(convertArr(:,:,4),1);
+if useERP
+FBAMeanObese = mean(convertArrObese(:,:,1),1);
+EFluxMeanObese = mean(convertArrObese(:,:,2),1);
+FALCONMeanObese = mean(convertArrObese(:,:,3),1);
+GXFBAMeanObese = mean(convertArrObese(:,:,4),1);
+end
 FBAStds = std(convertArr(:,:,1),0,1)';
 EFluxStds = std(convertArr(:,:,2),0,1)';
 FALCONStds = std(convertArr(:,:,3),0,1)';
@@ -165,10 +185,28 @@ GXFBAStds = std(convertArr(:,:,4),0,1)';
 uniqSubs = unique(bigModelTableFlux.subSystems);
 methodsList = {'FBA','EFlux','FALCON','GXFBA'};
 labels = {}; yvals = []; grouplabels = {}; labels1 = {}; yvals1 = [];
+labelsDiffERP1 = {}; yvalsDiffERP1 = []; yvals2DiffERP1 = [];
+labelsDiffERP2 = {}; yvalsDiffERP2 = []; yvals2DiffERP2 = [];
+labelsDiffERP3 = {}; yvalsDiffERP3 = []; yvals2DiffERP3 = [];
+labelsDiffERP4 = {}; yvalsDiffERP4 = []; yvals2DiffERP4 = [];
 convertArr2 = std(convertArr,0,1);
 for i=1:length(uniqSubs)
     labels1{end+1} = uniqSubs{i};
     yvals1(end+1) = sum(convertArr2(1,strcmp(bigModelTableFlux.subSystems,uniqSubs{i}),3)~=0);
+    if useERP
+    labelsDiffERP1{end+1} = uniqSubs{i};
+    yvalsDiffERP1(end+1) = abs(sum(FBAMeanNorm(strcmp(bigModelTableFlux.subSystems,uniqSubs{i}))-FBAMeanObese(strcmp(bigModelTableFlux.subSystems,uniqSubs{i}))));
+    yvals2DiffERP1(end+1) = abs(sum(FBAStds(strcmp(bigModelTableFlux.subSystems,uniqSubs{i}))));
+    labelsDiffERP2{end+1} = uniqSubs{i};
+    yvalsDiffERP2(end+1) = abs(sum(EFluxMeanNorm(strcmp(bigModelTableFlux.subSystems,uniqSubs{i}))-EFluxMeanObese(strcmp(bigModelTableFlux.subSystems,uniqSubs{i}))));
+    yvals2DiffERP2(end+1) = abs(sum(EFluxStds(strcmp(bigModelTableFlux.subSystems,uniqSubs{i}))));
+    labelsDiffERP3{end+1} = uniqSubs{i};
+    yvalsDiffERP3(end+1) = abs(sum(FALCONMeanNorm(strcmp(bigModelTableFlux.subSystems,uniqSubs{i}))-FALCONMeanObese(strcmp(bigModelTableFlux.subSystems,uniqSubs{i}))));
+    yvals2DiffERP3(end+1) = abs(sum(FALCONStds(strcmp(bigModelTableFlux.subSystems,uniqSubs{i}))));
+    labelsDiffERP4{end+1} = uniqSubs{i};
+    yvalsDiffERP4(end+1) = abs(sum(GXFBAMeanNorm(strcmp(bigModelTableFlux.subSystems,uniqSubs{i}))-GXFBAMeanObese(strcmp(bigModelTableFlux.subSystems,uniqSubs{i}))));
+    yvals2DiffERP4(end+1) = abs(sum(GXFBAStds(strcmp(bigModelTableFlux.subSystems,uniqSubs{i}))));
+    end
     %yvals1(end+1) = mean(convertArr2(1,strcmp(bigModelTableFlux.subSystems,uniqSubs{i}),3));
     for j=1:length(methodsList)
         labels{end+1} = [uniqSubs{i} '_' methodsList{j}];
@@ -176,6 +214,18 @@ for i=1:length(uniqSubs)
         grouplabels{end+1} = methodsList{j};
     end
 end
+[yvalsDiffERP1, sortIdxs] = sort(yvalsDiffERP1,'descend');
+labelsDiffERP1 = labelsDiffERP1(sortIdxs);
+yvals2DiffERP1 = yvals2DiffERP1(sortIdxs);
+[yvalsDiffERP2, sortIdxs] = sort(yvalsDiffERP2,'descend');
+labelsDiffERP2 = labelsDiffERP2(sortIdxs);
+yvals2DiffERP2 = yvals2DiffERP2(sortIdxs);
+[yvalsDiffERP3, sortIdxs] = sort(yvalsDiffERP3,'descend');
+labelsDiffERP3 = labelsDiffERP3(sortIdxs);
+yvals2DiffERP3 = yvals2DiffERP3(sortIdxs);
+[yvalsDiffERP4, sortIdxs] = sort(yvalsDiffERP4,'descend');
+labelsDiffERP4 = labelsDiffERP4(sortIdxs);
+yvals2DiffERP4 = yvals2DiffERP4(sortIdxs);
 [yvals1, sortIdxs] = sort(yvals1,'descend');
 labels1 = labels1(sortIdxs);
 for i=1:length(labels1)
@@ -185,10 +235,43 @@ for i=1:length(labels1)
     end
     labels1{i} = [ithNum '_' labels1{i}];
 end
+for i=1:length(labelsDiffERP1)
+    ithNum = num2str(i);
+    while length(ithNum) < 3
+        ithNum = ['0' ithNum];
+    end
+    labelsDiffERP1{i} = [ithNum '_' labelsDiffERP1{i}];
+end
+for i=1:length(labelsDiffERP2)
+    ithNum = num2str(i);
+    while length(ithNum) < 3
+        ithNum = ['0' ithNum];
+    end
+    labelsDiffERP2{i} = [ithNum '_' labelsDiffERP2{i}];
+end
+for i=1:length(labelsDiffERP3)
+    ithNum = num2str(i);
+    while length(ithNum) < 3
+        ithNum = ['0' ithNum];
+    end
+    labelsDiffERP3{i} = [ithNum '_' labelsDiffERP3{i}];
+end
+for i=1:length(labelsDiffERP4)
+    ithNum = num2str(i);
+    while length(ithNum) < 3
+        ithNum = ['0' ithNum];
+    end
+    labelsDiffERP4{i} = [ithNum '_' labelsDiffERP4{i}];
+end
 
 writeData({labels,yvals,grouplabels},'/home/fs01/yw595/fourMethodsSubsStds.txt','\t',{'subsAndMethod','std','method'});
 writeData({labels1,yvals1},'/home/fs01/yw595/fourMethodsSubsStdsFALCONOnly.txt','\t',{'sub','std'});
+writeData({labelsDiffERP1,yvalsDiffERP1,yvalsDiffERP1-yvals2DiffERP1,yvalsDiffERP1+yvals2DiffERP1},'/home/fs01/yw595/FBAOnlyDiffERP.txt','\t',{'sub','avgdiff','lower','upper'});
+writeData({labelsDiffERP2,yvalsDiffERP2,yvalsDiffERP2-yvals2DiffERP2,yvalsDiffERP2+yvals2DiffERP2},'/home/fs01/yw595/EFluxOnlyDiffERP.txt','\t',{'sub','avgdiff','lower','upper'});
+writeData({labelsDiffERP3,yvalsDiffERP3,yvalsDiffERP3-yvals2DiffERP3,yvalsDiffERP3+yvals2DiffERP3},'/home/fs01/yw595/FALCONOnlyDiffERP.txt','\t',{'sub','avgdiff','lower','upper'});
+writeData({labelsDiffERP4,yvalsDiffERP4,yvalsDiffERP4-yvals2DiffERP4,yvalsDiffERP4+yvals2DiffERP4},'/home/fs01/yw595/GXFBAOnlyDiffERP.txt','\t',{'sub','avgdiff','lower','upper'});
 bigModelReconc.FALCONStds = FALCONStds;
+printModel(bigModelReconc,convertArr(1,:,3),'/home/fs01/yw595/reducedFBABigModelReconcFALCONFlux.txt','/home/fs01/yw595/frequentMetsBigModelReconcFALCONFlux.txt');
 printModel(bigModelReconc,bigModelReconc.FALCONStds,'/home/fs01/yw595/reducedFBABigModelReconcFALCONStds.txt','/home/fs01/yw595/frequentMetsBigModelReconcFALCONStds.txt');
 printModel(bigModelReconc,bigModelReconc.express,'/home/fs01/yw595/reducedFBABigModelReconcExpress.txt','/home/fs01/yw595/frequentMetsBigModelReconcExpress.txt');
 end

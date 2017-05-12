@@ -43,6 +43,24 @@ for i=1:length(filenames)
             line = fgetl(FI);
         end
         fclose(FI);
+
+        if count > 10 && ~strcmp(modelName,'iAbaylyiv4') && ~strcmp(modelName,'iSB619')
+            modelTemp = modelNamesToModels(strrep(modelName,'.','_'));
+            if ~isfield(modelTemp,'modelName')
+            xmlFI = fopen(modelTemp.description);
+            line = fgetl(xmlFI);
+            while line ~= -1
+                if ~isempty(regexp(line,'model.*name'))
+                    t = regexp(line,'name=\"(.*)\"','tokens');
+                    modelTemp.modelName = t{1}{1};
+                    t{1}{1}
+                end
+                line = fgetl(xmlFI);
+            end
+            fclose(xmlFI);
+            end
+            modelNamesToModels(strrep(modelName,'.','_')) = modelTemp;
+        end
         
         if count > 10 && ~strcmp(modelName,'iAbaylyiv4') && ~strcmp(modelName,'iSB619')
             if ~isKey(modelNamesToModels,strrep(modelName,'.','_'))
@@ -79,7 +97,14 @@ for i=1:length(filenames)
     end
 end
 bigModelsAccumSubsystems = cellfun(@(x) x.subSystems,bigModelsAccum,'UniformOutput',0);
+modelNames = keys(modelNamesToModels);
+modelNamesShortList = cellfun(@(x) strsplit(modelNamesToModels(x).modelName,'_'), modelNames, 'UniformOutput', 0);
+modelNamesShort = {};
+for i=1:length(modelNamesShortList)
+    temp = modelNamesShortList{i};
+    modelNamesShort{end+1} = [temp{1} ' ' temp{2}];
+end
 save([outputDir1 filesep 'extra.mat'],'bigModelsAccumSubsystems');
 save([outputDir1 filesep 'makeBigModelAccum.mat'],'bigModelAccum', ...
-     'modelNamesToModels','rxnsToECsAccum','ECsToRxnsAccum','bigModelsAccum');
+     'modelNamesToModels','modelNamesShort','rxnsToECsAccum','ECsToRxnsAccum','bigModelsAccum');
 

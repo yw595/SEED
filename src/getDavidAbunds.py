@@ -1,0 +1,69 @@
+import subprocess
+
+inputFI1 = open('DavidS8.txt')
+inputFI2 = open('DavidS9.txt')
+foundTaxa = []
+foundClusts1 = []
+foundClusts2 = []
+foundTaxa1 = []
+foundTaxa2 = []
+for line in inputFI2:
+    words = line.split('\t')
+    if float(words[1]) < 0 and float(words[2]) > 0:
+        foundClusts1.append(words[0])
+    elif float(words[1]) > 0 and float(words[2]) < 0:
+        foundClusts2.append(words[0])
+inputFI2.close()
+currentClust = ''
+currentTaxa = []
+currentAbunds = []
+for line in inputFI1:
+    words = line.split('\t')
+    dotIdx = words[3].find('.')
+    #if words[3][len(words[3])-1]=='f':
+    foundTaxon = ''
+    if dotIdx==len(words[3])-2:
+        foundTaxon = words[3][0:dotIdx]
+    else:
+        foundTaxon = words[3][0:dotIdx] + ' ' + words[3][dotIdx+1:len(words[3])]
+    if currentClust=='':
+        currentClust = words[0]
+    #print(currentClust)
+    if currentClust==words[0]:
+        currentTaxa.append(foundTaxon)
+        currentAbunds.append(float(words[4]))
+    else:
+        print(currentClust)
+        currentClust = words[0]
+        print(words)
+        maxAbund = max(currentAbunds)
+        for i in range(len(currentAbunds)):
+            if currentAbunds[i]==maxAbund:
+                maxTaxon = currentTaxa[i]
+        currentAbunds = []
+        currentTaxa = []
+        currentTaxa.append(foundTaxon)
+        currentAbunds.append(float(words[4]))
+        foundTaxa.append(maxTaxon)
+        foundTaxa = list(set(foundTaxa))
+        if words[0][8:len(words[0])] in foundClusts1:
+            foundTaxa1.append(foundTaxon)
+        if words[0][8:len(words[0])] in foundClusts2:
+            foundTaxa2.append(foundTaxon)
+    #print(currentClust)
+inputFI1.close()
+
+outputFI = open('DavidTaxa.txt','w')
+for taxon in foundTaxa:
+    outputFI.write(taxon + '\n')
+outputFI.close()
+
+outputFI = open('DavidTaxa1.txt','w')
+for taxon in foundTaxa1:
+    outputFI.write(taxon + '\n')
+outputFI.close()
+
+outputFI = open('DavidTaxa2.txt','w')
+for taxon in foundTaxa2:
+    outputFI.write(taxon + '\n')
+outputFI.close()

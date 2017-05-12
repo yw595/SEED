@@ -9,8 +9,15 @@ if ~exist('GreenblumEC','var')
     fclose(FI);
     GreenblumEC = GreenblumEC{1};
 end
+if ~exist('cpdData','var')
+    FI = fopen([inputDir filesep 'compoundsCleaned.csv']);
+    dataFields = textscan(FI,repmat('%s',1,10),'Delimiter',',');
+    cpdData = [dataFields{:}]; fclose(FI);
+    cpdIDs = cpdData(:,1); cpdNames = cpdData(:,2); cpdAbbrvs = cpdData(:,3); cpdKEGGs = cpdData(:,5);
+    fclose(FI);
+end
 if ~exist('CobraLPSolver','var')
-    %initCobraToolbox;
+    initCobraToolbox;
 end
 if exist([outputDir filesep 'makeBigModelAccum' filesep 'makeBigModelAccum.mat'],'file') && ~exist('bigModelAccum','var')
     load([outputDir filesep 'makeBigModelAccum' filesep 'makeBigModelAccum.mat'],'bigModelAccum','modelNamesToModels','rxnsToECsAccum','ECsToRxnsAccum');
