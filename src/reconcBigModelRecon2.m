@@ -3,31 +3,12 @@
 %reconcSubMatchArr = zeros(length(reconcSubArr),1);
 
 if 0
-FI = fopen([inputDir filesep 'compoundsCleaned.csv']);
-dataFields = textscan(FI,repmat('%s',1,10),'Delimiter',',');
-cpdData = [dataFields{:}]; fclose(FI);
-cpdIDs = cpdData(:,1); cpdNames = cpdData(:,2); cpdAbbrvs = cpdData(:,3); cpdKEGGs = cpdData(:,5);
 
 bigModelReconc = bigModelAdded;
 bigModelReconc.prevmets = bigModelReconc.mets;
 bigModelReconc.prevmetNames = bigModelReconc.metNames;
 bigModelReconc.prevrxns = bigModelReconc.rxns;
 bigModelReconc.prevrxnNames = bigModelReconc.rxnNames;
-bigModelReconc.metKEGGs = {};
-for i=1:length(bigModelReconc.mets)
-    reconcmet = bigModelReconc.mets{i};
-    if ~isempty(regexp(reconcmet,'\['))
-        reconcmet = reconcmet(1:end-3);
-    end
-    matchIdx = find(strcmp(reconcmet,cpdIDs));
-    if ~isempty(matchIdx)
-        matchIdx = matchIdx(1);
-        bigModelReconc.metKEGGs{i} = cpdKEGGs{matchIdx};
-    else
-        bigModelReconc.metKEGGs{i} = '';
-    end
-end
-bigModelReconc.metKEGGs = bigModelReconc.metKEGGs';
 
 origRecon2MetKEGGs = {};
 origRecon2MetKEGGsHash = {};

@@ -1,4 +1,8 @@
 configSEED;
+outputDir1 = [outputDir filesep 'mapHMPEC'];
+if ~exist(outputDir1,'dir')
+    mkdir(outputDir1);
+end
 inputDir2 = [inputDir filesep 'HMPRef'];
 HMPRefFiles = dir(inputDir2);
 count = 0;
@@ -101,3 +105,5 @@ for i=1:length(HMPRefFiles)
         fclose(HMPFI);
     end
 end
+
+save([outputDir1 filesep 'mapHMPEC.mat'],'allECs','percentageGeneCovs','percentageECCovs','speciesNames','allECLengths','flatTableECNums','geneNameToEC','HMPIDsToGeneNames');

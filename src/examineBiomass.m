@@ -1,32 +1,12 @@
-allKeys = keys(modelNamesToModels);
-if 1
-FI = fopen([inputDir filesep 'compoundsCleaned.csv']);
-dataFields = textscan(FI,repmat('%s',1,10),'Delimiter',',');
-cpdData = [dataFields{:}]; fclose(FI);
-cpdIDs = cpdData(:,1); cpdNames = cpdData(:,2); cpdAbbrvs = cpdData(:,3); cpdKEGGs = cpdData(:,5);
+%configSEED;
+outputDir1 = [outputDir filesep 'examineBiomass'];
+if ~exist(outputDir1,'dir')
+    mkdir(outputDir1);
+end
 
-for i=1:length(allKeys)
-    i
-    testmodel = modelNamesToModels(allKeys{i});
-    for j=1:length(testmodel.mets)
-        reconcmet = testmodel.mets{j};
-        if ~isempty(regexp(reconcmet,'\['))
-            reconcmet = reconcmet(1:end-3);
-        end
-        matchIdx = find(strcmp(reconcmet,cpdIDs));
-        if ~isempty(matchIdx)
-            matchIdx = matchIdx(1);
-            testmodel.metKEGGs{j} = cpdKEGGs{matchIdx};
-        else
-            testmodel.metKEGGs{j} = '';
-        end
-    end
-    modelNamesToModels(allKeys{i}) = testmodel;
-end
-end
 allBiomNames = {};
-for i=1:length(allKeys)
-    testmodel = modelNamesToModels(allKeys{i});
+for i=1:length(modelNames)
+    testmodel = modelNamesToModels(modelNames{i});
     biomidx = find(cellfun(@(x) length(regexpi(x,'BIOM')),testmodel.rxnNames));
     %allKeys{i}
     %testmodel.rxnNames(biomidx)
@@ -40,8 +20,9 @@ sortedBiomNames = {'Biomass','Biomass2','biomass objective function','EX Biomass
 
 allShadMets = {};
 allBiomassRates = [];
-for i=1:length(allKeys)
-    testmodel = modelNamesToModels(allKeys{i});
+allBiomassDists = {};
+for i=1:length(modelNames)
+    testmodel = modelNamesToModels(modelNames{i});
     for j=1:length(sortedBiomNames)
         biomidx = find(strcmp(testmodel.rxnNames,sortedBiomNames{j}));
         if ~isempty(biomidx)
@@ -49,16 +30,17 @@ for i=1:length(allKeys)
             if length(biomidx)==1
                 testmodel = changeObjective(testmodel,testmodel.rxns{biomidx});
             else
-                testmodel = changeObjective(testmodel,testmodel.rxns(biomidx),ones(length(biomidx)));
+                testmodel = changeObjective(testmodel,testmodel.rxns(biomidx),ones(length(biomidx))); 
             end
             sol = optimizeCbModel(testmodel);
             [maxShad, maxIdx] = max(abs(sol.y));
             disp(maxShad)
-            disp(testmodel.modelName);
+            %disp(testmodel.modelName);
             disp(testmodel.metNames{maxIdx});
             disp(testmodel.metKEGGs{maxIdx});
             allShadMets{i} = testmodel.metKEGGs{maxIdx};
             allBiomassRates(i) = sol.f;
+            allBiomassDists{i} = sol.x;
             if strcmp(allShadMets{i},'')
                 allShadMets{i} = testmodel.metNames{maxIdx};
             end
@@ -67,26 +49,5 @@ for i=1:length(allKeys)
     end
 end
 
-numShadSpecies = zeros(length(uniqAllShadMets),1);
-xArr = []; yArr = []; speciesArr = {}; metArr = {}; presabsArr = {};
-uniqAllShadMets = unique(allShadMets)
-for i=1:length(allKeys)
-    for j=1:length(uniqAllShadMets)
-        xArr(end+1) = j;
-        yArr(end+1) = i;
-        speciesArr{end+1} = modelNamesToModels(allKeys{i}).modelName;
-        metArr{end+1} = uniqAllShadMets{j};
-        presabsArr{end+1} = 'absent';
-        if strcmp(uniqAllShadMets{j},allShadMets{i})
-            presabsArr{end} = 'present';
-            numShadSpecies(j) = numShadSpecies(j)+1;
-        end
-    end
-end
+save([outputDir1 filesep 'examineBiomass.mat'],'allBiomassRates','allShadMets','allBiomassDists');
 
-numSharedShad = [];
-for i=1:length(allShadMets)
-    numSharedShad(i) = numShadSpecies(strcmp(uniqAllShadMets,allShadMets{i}));
-end
-
-writeData({xArr,yArr,speciesArr,metArr,presabsArr},'/home/fs01/yw595/shadMetHeatMap.txt','\t',{'x','y','species','met','presabs'});

@@ -21,7 +21,7 @@ minModelSubsystems = unique(minModelTrue.subSystems);
 minModelSubsystemsCounts = cellfun(@(x) sum(strcmp(minModelTrue.subSystems,x)), minModelSubsystems);
 [minModelSubsystemsCounts sortIdxs] = sort(minModelSubsystemsCounts);
 minModelSubsystems = addIdxStrings(minModelSubsystems(sortIdxs));
-writeData({minModelSubsystems,minModelSubsystemsCounts},'/home/fs01/yw595/minModelSubsystems.txt','\t',{'subsystem','count'});
+writeData({minModelSubsystems,minModelSubsystemsCounts},[transferDir filesep 'minModelSubsystems.txt'],'\t',{'subsystem','count'});
 
 subsystemsAddedArrBigLabel = addIdxStrings(subsystemsAddedArrBig);
 corrMatrix = [];
@@ -45,7 +45,7 @@ for i=1:length(corrLabels)
     end
 end
 
-writeData({xvals,yvals,xlabels,group},'/home/fs01/yw595/reducedModelCorrs.txt','\t',{'xvals','yvals','xlabels','group'});
+writeData({xvals,yvals,xlabels,group},[transferDir filesep 'reducedModelCorrs.txt'],'\t',{'xvals','yvals','xlabels','group'});
 
 
 

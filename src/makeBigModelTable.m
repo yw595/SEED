@@ -4,12 +4,7 @@ outputDir1 = [outputDir filesep 'makeBigModelTable'];
 if ~exist(outputDir1,'dir')
     mkdir(outputDir1);
 end
-FI = fopen([inputDir filesep 'reactionsCleaned.csv']);
-dataFields = textscan(FI,repmat('%s',1,9),'Delimiter',',');
-rxnData = [dataFields{:}]; fclose(FI);
-FI = fopen([inputDir filesep 'compoundsCleaned.csv']);
-dataFields = textscan(FI,repmat('%s',1,10),'Delimiter',',');
-cpdData = [dataFields{:}]; fclose(FI);
+
 rxnsToECsTable = containers.Map; ECsToRxnsTable = containers.Map;
 for i=1:length(rxnData)
     rxnName = rxnData{i,1};
@@ -27,9 +22,6 @@ end
 
 warning('off')
 bigModelTable = bigModelAccum;
-cpdIDs = cpdData(:,1); cpdNames = cpdData(:,2); cpdAbbrvs = cpdData(:,3);
-rxnIDs = rxnData(:,1); rxnNames = rxnData(:,2); equations = rxnData(:,7);
-equations = cellfun(@(x) strrep(strrep(x,'(',''),')',''), equations, 'UniformOutput',0);
 badIdxs = find(strcmp(equations,'<=> '));
 for i=1:length(rxnIDs)
     if mod(i,100)==0
@@ -66,7 +58,23 @@ for i=1:length(rxnIDs)
         bigModelTable.rxnECNums{strcmp(bigModelTable.rxns,rxnIDs{i})} = rxnsToECsTable(rxnIDs{i});
     end
 end
+
 bigModel = addMustEx(bigModelTable);
+bigModel.metKEGGs = {};
+for i=1:length(bigModel.mets)
+    reconcmet = bigModel.mets{i};
+    if ~isempty(regexp(reconcmet,'\['))
+        reconcmet = reconcmet(1:end-3);
+    end
+    matchIdx = find(strcmp(reconcmet,cpdIDs));
+    if ~isempty(matchIdx)
+        matchIdx = matchIdx(1);
+        bigModel.metKEGGs{i} = cpdKEGGs{matchIdx};
+    else
+        bigModel.metKEGGs{i} = '';
+    end
+end
+bigModel.metKEGGs = bigModel.metKEGGs';
 modelNamesToModelsValues = values(modelNamesToModels);
 testModel = modelNamesToModelsValues{1};
 bigModelAdded = mergeModels(bigModel,testModel);

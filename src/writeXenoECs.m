@@ -1,4 +1,10 @@
-xenoFI = fopen('/home/fs01/yw595/MATLAB/SEED/input/xenobiotics/GSM935962_A1_EtOH_CDS.counts.txt');
+configSEED;
+outputDir1 = [outputDir filesep 'writeXenoEC'];
+if ~exist(outputDir1,'dir')
+    mkdir(outputDir1);
+end
+inputDir1 = [inputDir filesep 'xenobiotics'];
+xenoFI = fopen([inputDir1 filesep 'GSM935962_A1_EtOH_CDS.counts.txt']);
 dataFields = textscan(xenoFI,'%s%s%s','Delimiter','\t', 'HeaderLines',0);
 fclose(xenoFI);
 dataFields = [dataFields{:}];
@@ -49,4 +55,6 @@ for i=1:length(xenoHMPIDs)
     end
 end
 
-writeData({xenoExpECs,xenoExps,xenoExpStds},'/home/fs01/yw595/MATLAB/SEED/input/xenobiotics/GSM935962_A1_EtOH_CDS.EC.txt','\t');
+save([outputDir1 filesep 'writeXenoECs.mat'],'xenoExpECs','xenoExps','xenoExpStds');
+
+writeData({xenoExpECs,xenoExps,xenoExpStds},[outputDir1 filesep 'GSM935962_A1_EtOH_CDS.EC.txt'],'\t');
