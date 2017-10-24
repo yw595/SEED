@@ -1,5 +1,10 @@
-function returnModel = mergeModels(origModel,modelTemp,specificRxn)
+function returnModel = mergeModels(origModel,modelTemp,specificRxn,blockRun)
 
+  if exist('blockRun','var') && blockRun==1
+  returnModel = origModel;
+[~,rxnsToAddIdxs] = setdiff(modelTemp.rxns,origModel.rxns);
+returnModel.rxns = union(returnModel.rxns,modelTemp.rxns(rxnsToAddIdxs),'stable');
+else
 returnModel = origModel;
 count = 0;
 for j=1:length(modelTemp.rxns)

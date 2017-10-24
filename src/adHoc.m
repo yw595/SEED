@@ -69,7 +69,7 @@ writeForGGPlot(xvals(1:end-5),yvals(1:end-5,:),[outputDir filesep 'Reactions_Add
 end
 
 if 1
-writeOutModel(bigModelTableTest,[outputDir filesep 'bigModelTableTest.txt']);
+%writeOutModel(bigModelTableTest,[outputDir filesep 'bigModelTableTest.txt']);
 
 %bigModel = bigModelTable;
 
@@ -96,7 +96,8 @@ for i=1:length(biomassMets)
     temp = xlabels{i};
     xlabels{i} = temp(1:min(10,length(temp)));
 end
-makeBar(xvals,yvals,titleString,outputDir,'ylabelString','Flux','xlabelString','Metabolite','xlabels',xlabels);
+writeData({xvals,yvals,xlabels},[transferDir filesep 'biomassMetProd.txt'],'\t',{'xvals','yvals','xlabels'});
+%makeBar(xvals,yvals,titleString,outputDir,'ylabelString','Flux','xlabelString','Metabolite','xlabels',xlabels);
 
 % xvals = 1:length(bigModels); titleString = 'numRxnsAdded'; yvals = cellfun(@(x) length(x.rxns), bigModels);
 % xlabels = {};

@@ -1,3 +1,58 @@
+useWu = 1;
+if useWu
+    closestTaxaRevData = textscan(fopen('/mnt/vdb/home/ubuntu2/closestTaxaWuRev.txt'),'%s%s','Delimiter','|','HeaderLines',0);
+    WuData = textscan(fopen('/mnt/vdb/home/ubuntu2/WuSI4Clean.txt'),'%s%s','Delimiter','|','HeaderLines',0);
+    WuTaxa = WuData{1};
+    WuChanges = cellfun(@(x) str2num(x), WuData{2});
+    WuClosestModels = {};
+    for i=1:length(WuTaxa)
+	closestModel = closestTaxaRevData{2}{strcmp(WuTaxa{i},closestTaxaRevData{1})};
+        tempIdx = find(strcmp(modelNamesShort,closestModel));
+        if sum(tempIdx) > 1
+            tempIdx = tempIdx(1);
+        end
+        WuClosestModels{i} = closestModel;
+    end
+    WuChangeDiffs = [];
+    newFBAVals = [];
+    WuChangeDiffsMatrix = [];
+    WuTaxaArr1 = {};
+    WuTaxaArr2 = {};
+    for i=1:length(WuTaxa)
+	for j=1:length(WuTaxa)
+	    WuChangeDiffs(end+1) = abs(WuChanges(i)-WuChanges(j));
+            WuChangeDiffsMatrix(i,j) = WuChangeDiffs(end);
+            newFBAVals(end+1) = newFBAMatrix(i,j,1)+newFBAMatrix(i,j,2);
+            WuTaxaArr1{end+1} = WuTaxa{i};
+            WuTaxaArr2{end+1} = WuTaxa{j};
+        end
+    end
+
+    writeData({WuTaxaArr1,WuTaxaArr2,WuChangeDiffs,newFBAVals},[transferDir filesep 'WuChangeVsNewFBA.txt'],'\t',{'wutaxa1','wutaxa2','wuchange','newfba'});
+    
+    WuChangesSort = sort(WuChangeDiffsMatrix(:),'descend');
+    WuChangesThresh = WuChangesSort(floor(length(WuChangesSort)*1));
+    WuChangesNetwork = WuChangeDiffsMatrix; WuChangesNetwork(WuChangesNetwork < WuChangesThresh) = 0;
+    newFBAValsSort = sort(newFBAVals(:),'descend');
+    newFBAValsThresh = newFBAValsSort(floor(length(newFBAValsSort)*1));
+    newFBAValsNetwork = newFBAMatrix(:,:,1) + newFBAMatrix(:,:,2); newFBAValsNetwork(newFBAValsNetwork < newFBAValsThresh) = 0;
+    newFBAValsNetwork2 = zeros(length(WuTaxa),length(WuTaxa));
+    for i=1:length(WuTaxa)
+	for j=1:length(WuTaxa)
+	    tempArr = abs(FBAGapMatrix(strcmp(modelNamesShort,WuClosestModels{i}),strcmp(modelNamesShort,WuClosestModels{j})));
+            tempArr = tempArr(:);
+            if sum(tempArr)~=0
+                newFBAValsNetwork2(i,j) = mean(tempArr(tempArr~=0));
+            end
+        end
+    end
+    newFBACents = betweenness_centrality(sparse(newFBAValsNetwork2)*1.0);
+    newFBACents = newFBACents/sum(newFBACents);
+    WuChangesCents = betweenness_centrality(sparse(WuChangesNetwork)*1.0);
+    WuChangesCents = WuChangesCents/sum(WuChangesCents);
+    writeData({newFBACents,WuChangesCents},[transferDir filesep 'newFBACentVsWuChangeCent.txt'],'\t',{'newfbacent','wuchangecent'});
+end
+
 useForslund = 0;
 if useForslund
     closestTaxaRevData = textscan(fopen('/home/fs01/yw595/closestTaxaForslundRev.txt'),'%s%s','Delimiter','|','HeaderLines',0);
@@ -14,7 +69,7 @@ if useForslund
         d = closestTaxaRevData{2}{strcmp(ForslundTaxa1{i},closestTaxaRevData{1})};
         tempIdx = find(strcmp(d,b));
         if sum(tempIdx) > 1
-            tempIdx =tempIdx(1);
+            tempIdx = tempIdx(1);
         end
         totalBiomass1Arr(end+1) = allBiomassRates(tempIdx);
         totalBiomass1 = totalBiomass1 + allBiomassRates(tempIdx);
@@ -50,7 +105,7 @@ if useForslund
     end
 end
 
-useDavid = 1;
+useDavid = 0;
 if useDavid
     closestTaxaData = textscan(fopen('/home/fs01/yw595/closestTaxa.txt'),'%s%s','Delimiter','|','HeaderLines',0);
     closestTaxaRevData = textscan(fopen('/home/fs01/yw595/closestTaxaRev.txt'),'%s%s','Delimiter','|','HeaderLines',0);

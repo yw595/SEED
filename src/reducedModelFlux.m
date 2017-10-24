@@ -5,12 +5,21 @@ minModelTrue = subselectModel(minModel,'minModelTrue',minModel.rxns(minModel.lb~
 [reducedModelArrBig subsystemsAddedArrBig] = makeReducedModelArr(minModelTrue,bigModelTableFlux,1);
 end
 
-if 0
+if 1
 falconfluxesArr = {};
 fbafluxesArr = {};
 efluxesArr = {};
 for i=5:length(reducedModelArrBig)
-    efluxesArr{i} = runFluxMethod(expressionData,expressionIDs,'testeflux',reducedModelArrBig{i},'EFlux',ones(length(expressionData),1),'BIOMASS');
+     usePseudoPicrustData = 1;
+if usePseudoPicrustData
+geneExpVal = 1;
+model = reducedModelArrBig{i};
+    expressionData = geneExpVal*abs(normrnd(0,1,length(model.rxns),1));
+    expressionSDs = ones(size(model.rxns));
+    expressionIDs = model.rxns;
+end
+
+     efluxesArr{i} = runFluxMethod(expressionData,expressionIDs,'testeflux',reducedModelArrBig{i},'EFlux',ones(length(expressionData),1),'BIOMASS');
     fbasol = optimizeCbModel(reducedModelArrBig{i});
     fbafluxesArr{i} = fbasol.x;
     falconfluxesArr{i} = runFluxMethod(expressionData,expressionIDs,'testfalcon',reducedModelArrBig{i},'FALCON',expressionSDs);

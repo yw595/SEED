@@ -1,7 +1,11 @@
 
 expressionDataArr = {};
 expressionSDsArr = {};
-for z = 1:zLim
+zReadLim = zLim;
+if testNormObeseVector==1
+    zReadLim = 2;
+end
+for z = 1:zReadLim
     expressionIDs = {};
     expressionData = [];
     expressionSDs = [];

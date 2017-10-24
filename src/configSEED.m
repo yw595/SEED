@@ -1,4 +1,5 @@
-baseDir = '/home/fs01/yw595/MATLAB/SEED';
+baseDir = '/mnt/vdb/home/ubuntu2/MATLAB/SEED';
+srcDir = [baseDir filesep 'src'];
 inputDir = [baseDir filesep 'input'];
 outputDir = [baseDir filesep 'output'];
 transferDir = [baseDir filesep 'transfer'];
@@ -24,16 +25,16 @@ if ~exist('cpdData','var')
     fclose(FI);
 end
 if ~exist('metabolomeData','var')
-    ERPData = textscan(fopen('/home/fs01/yw595/MATLAB/SEED/input/MGMData/ERPBowtieComplete.txt'),'%s%s%s%s','Delimiter','\t','HeaderLines',0);
-    xenoData = textscan(fopen('/home/fs01/yw595/MATLAB/SEED/output/writeXenoData/GSM935962_A1_EtOH_CDS.EC.txt'),'%s%s%s','Delimiter','\t','HeaderLines',0);
-    metabolomeData = textscan(fopen('/home/fs01/yw595/MATLAB/SEED/input/fecalmicrobiomeauto.txt'),'%s%s','Delimiter','\t','HeaderLines',0);
-    hadzaData = textscan(fopen('/home/fs01/yw595/output3.EC.txt'),'%s%s','Delimiter','\t','HeaderLines',0);
+    ERPData = textscan(fopen([inputDir filesep 'MGMData/ERPBowtieComplete.txt']),'%s%s%s%s','Delimiter','\t','HeaderLines',0);
+    xenoData = textscan(fopen([outputDir filesep 'writeXenoEC/GSM935962_A1_EtOH_CDS.EC.txt']),'%s%s%s','Delimiter','\t','HeaderLines',0);
+    metabolomeData = textscan(fopen([inputDir filesep 'fecalmicrobiomeauto.txt']),'%s%s','Delimiter','\t','HeaderLines',0);
+    %hadzaData = textscan(fopen('/home/fs01/yw595/output3.EC.txt'),'%s%s','Delimiter','\t','HeaderLines',0);
 end
 if ~exist('closestFamiliesData','var')
-    closestFamiliesData = textscan(fopen('/home/fs01/yw595/closestFamilies.txt'),'%s%s','Delimiter','|','HeaderLines',0);
-    abundsData = textscan(fopen('/home/fs01/yw595/MATLAB/SEED/src/HMPFamiliesAbundsAndOccurs.txt'),'%s%s%s','Delimiter','\t','HeaderLines',0);
-    allAbundsData = textscan(fopen('/home/fs01/yw595/MATLAB/SEED/src/HMPAllAbunds.txt'),repmat('%s',1,3840),'Delimiter','\t','HeaderLines',0);
-    closestFamiliesRevData = textscan(fopen('/home/fs01/yw595/closestFamiliesRev.txt'),'%s%s','Delimiter','|','HeaderLines',0);
+    %closestFamiliesData = textscan(fopen([baseDir filesep 'closestFamilies.txt']),'%s%s','Delimiter','|','HeaderLines',0);
+    abundsData = textscan(fopen([srcDir filesep 'HMPFamiliesAbundsAndOccurs.txt']),'%s%s%s','Delimiter','\t','HeaderLines',0);
+    allAbundsData = textscan(fopen([srcDir filesep 'HMPAllAbunds.txt']),repmat('%s',1,3840),'Delimiter','\t','HeaderLines',0);
+    %closestFamiliesRevData = textscan(fopen([baseDir filesep 'closestFamiliesRev.txt']),'%s%s','Delimiter','|','HeaderLines',0);
     allAbundsDataMatrix = cell2mat(cellfun(@(x) cellfun(@(y) str2num(y), x), allAbundsData(2:end),'UniformOutput',0));
     allAbundsDataNames = allAbundsData{1};
 end
@@ -82,6 +83,9 @@ if exist([outputDir filesep 'mergeSmallModels' filesep 'mergeSmallModels.mat'],'
         end
     end
     allTwoBiomasses = allTwoBiomassesTemp;
+end
+if exist([outputDir filesep 'simulateSmallModelsSeparate' filesep 'simulateSmallModelsSeparate.mat'],'file') && ~exist('FBAGapMatrix','var')
+load([outputDir filesep 'simulateSmallModelsSeparate' filesep 'simulateSmallModelsSeparate.mat'],'FBAGapMatrix','newFBAMatrix','newFBAMatrixPureComp','numIntersectMatrix','numIntersectMatrixAdd','numIntersectMatrixMets','numIntersectMatrixMetsAdd');
 end
 if exist([outputDir filesep 'readHMPTaxaData' filesep 'readHMPTaxaData.mat'],'file') && ~exist('closestFamiliesData','var')
     load([outputDir filesep 'readHMPTaxaData' filesep 'readHMPTaxaData.mat']);

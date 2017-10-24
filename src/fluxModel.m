@@ -1,7 +1,7 @@
 configSEED;
 
-if 0
-    %configSEED;
+if 1
+%configSEED;
 rxnsToExpressObeseKeys = keys(rxnsToExpressObese);
 
 % bigModelTableFlux = addMustEx(bigModelTable);
@@ -34,29 +34,34 @@ if 0
     bigModelTableFlux = restrictFecalMet(bigModelTableFlux,metabolomeData);
 end
 
-if 0
-    
+if 1
 normFluxesNormalArr = {};
 normFluxesObeseArr = {};
 useERP = 1;
 useXeno = 0;
 useHadza = 0;
-useScramble = 1;
+useScramble = 0;
+testNormObeseVector = 1;
 zLim = 2;
-if useXeno==1 or useHadza==1
+z1Lim = 10;
+if useXeno==1 || useHadza==1 or testNormObeseVector==1
     zLim = 1;
+end
+if testNormObeseVector==1
+    z1Lim = 11;
 end
 readERPHadzaXeno;
 
-for z1=1:10
+for z1=1:z1Lim
     for z=1:zLim
+	disp(z1);
         expressionData = expressionDataArr{z};
         expressionSDs = expressionSDsArr{z};
         if useScramble
             zScramble = setdiff(1:zLim,z);
             expressionDataAlt = expressionDataArr{zScramble};
             expressionSDsAlt = expressionSDsArr{zScramble};
-            randIdxs = randperm(length(expressionData),floor(length(expressionData)/10));
+            randIdxs = randperm(length(expressionData));%,floor(length(expressionData)/10));
             expressionDataScramble = expressionData;
             expressionDataScramble(randIdxs) = expressionDataAlt(randIdxs);
             expressionSDsScramble = expressionSDs;
@@ -66,6 +71,10 @@ for z1=1:10
         if useScramble && z1~=1
             disp('CONTRADICT')
             normFluxes = runAllFluxMethods(bigModelTableFlux,expressionDataScramble,expressionSDsScramble,expressionIDs);
+        else if testNormObeseVector==1
+	    expressionDataStep = .1*(z1-1)*expressionDataArr{1}+.1*(11-z1)*expressionDataArr{2};
+            expressionSDsStep = .1*(z1-1)*expressionSDsArr{1}+.1*(11-z1)*expressionSDsArr{2};
+            normFluxes = runAllFluxMethods(bigModelTableFlux,expressionDataStep,expressionSDsStep,expressionIDs);
         else
             normFluxes = runAllFluxMethods(bigModelTableFlux,expressionData,expressionSDs,expressionIDs);
         end
@@ -79,10 +88,9 @@ for z1=1:10
         end
     end
 end
-
 end
 
-if 1
+if 0
 convertArr = [];
 for i=1:length(normFluxesNormalArr)
     convertArr(i,:,:) = normFluxesNormalArr{i};
@@ -112,43 +120,31 @@ for i=3:3%length(methodsList)
         methodstds = std(convertArr(:,:,1),0,1)';
     end
 
-    labels = {}; yvals = []; grouplabels = {}; labels1 = {}; yvals1 = [];
-    labelsDiffERP = {}; yvalsDiffERP = []; yvals2DiffERP = []; yvals3DiffERP = [];
-    for j=1:length(uniqSubs)
-        labels1{end+1} = uniqSubs{j};
-        yvals1(end+1) = sum(convertArr2(1,strcmp(bigModelTableFlux.subSystems,uniqSubs{i}),3)~=0);
-        if useERP
-            labelsDiffERP{end+1} = uniqSubs{j};
-            yvalsDiffERP(end+1) = abs(sum(meanNorm(strcmp(bigModelTableFlux.subSystems,uniqSubs{j}))-meanObese(strcmp(bigModelTableFlux.subSystems,uniqSubs{j}))));
-            yvals2DiffERP(end+1) = abs(sum(methodstds(strcmp(bigModelTableFlux.subSystems,uniqSubs{j}))));
-            if useScramble
-                yvals3DiffERP(end+1) = yvalsDiffERP(end)/yvals2DiffERP(end);
-            end
-        end        
-    end
-    [yvalsDiffERP, sortIdxs] = sort(yvalsDiffERP,'descend');
-    labelsDiffERP = labelsDiffERP(sortIdxs);
-    yvals2DiffERP = yvals2DiffERP(sortIdxs);
-    yvals3DiffERP = yvals3DiffERP(sortIdxs);
-    labelsTemp = labelsDiffERP(~isnan(yvals3DiffERP) & ~isinf(yvals3DiffERP));
-    yvalsTemp = yvals3DiffERP(~isnan(yvals3DiffERP) & ~isinf(yvals3DiffERP));
+    %[subLabelsDiffERP,subFluxSums,~,~,~] = segmentFluxBySubsystem(bigModelTableFlux,squeeze(convertArr2(1,:,3)));
+    [subLabels,~,subFluxDiffSums,subFluxStdSums,subFluxDiffScaledSums] = segmentFluxBySubsystem(bigModelTableFlux,meanNorm,1,meanObese,1,methodstds);  
+    [subFluxSums, sortIdxs] = sort(subFluxSums,'descend');
+    subLabels = subLabels(sortIdxs);
+    subFluxStdSums = subFluxStdSums(sortIdxs);
+    subFluxDiffScaledSums = subFluxDiffScaledSums(sortIdxs);
+    labelsTemp = subLabels(~isnan(subFluxDiffScaledSums) & ~isinf(subFluxDiffScaledSums));
+    yvalsTemp = subFluxDiffScaledSums(~isnan(subFluxDiffScaledSums) & ~isinf(subFluxDiffScaledSums));
     [yvalsTemp, sortIdxsTemp] = sort(yvalsTemp,'descend');
     labelsTemp = labelsTemp(sortIdxsTemp);
-    [yvals1, sortIdxs] = sort(yvals1,'descend');
-    labels1 = labels1(sortIdxs);
-    labels1 = addIdxStrings(labels1);
+    [subFluxStdSums, sortIdxs] = sort(subFluxStdSums,'descend');
+    subLabels = subLabels(sortIdxs);
+    subLabels = addIdxStrings(subLabels);
     labelsTemp = addIdxStrings(labelsTemp);
-    labelsDiffERP = addIdxStrings(labelsDiffERP);
 
-    writeData({labelsDiffERP,yvalsDiffERP,yvalsDiffERP-yvals2DiffERP,yvalsDiffERP+yvals2DiffERP},['/home/fs01/yw595/' methodsList{i} 'OnlyDiffERP.txt'],'\t',{'sub','avgdiff','lower','upper'});
-    writeData({labelsTemp,yvalsTemp},['/home/fs01/yw595/' methodsList{i} 'OnlyDiffERPAdjusted.txt'],'\t',{'sub','avgdiff'});
-    writeData({labels1,yvals1},['/home/fs01/yw595/fourMethodsSubsStds' methodsList{i} 'Only.txt'],'\t',{'sub','std'});
-    printModel(bigModelReconc,convertArr(1,:,i),['/home/fs01/yw595/reducedFBABigModelReconc' methodsList{i} 'Flux.txt'],['/home/fs01/yw595/frequentMetsBigModelReconc' methodsList{i} 'Flux.txt']);
-    printModel(bigModelReconc,abs(convertArr(1,:,i)-convertArrObese(1,:,i)),['/home/fs01/yw595/reducedFBABigModelReconc' methodsList{i} 'DiffFlux.txt'],['/home/fs01/yw595/frequentMetsBigModelReconc' methodsList{i} 'DiffFlux.txt']);
-    printModel(bigModelReconc,methodstds,['/home/fs01/yw595/reducedFBABigModelReconc' methodsList{i} 'Stds.txt'],['/home/fs01/yw595/frequentMetsBigModelReconc' methodsList{i} 'Stds.txt']);
+    writeData({subLabels,subFluxSums,subFluxSums-subFluxStdSums,subFluxSums+subFluxStdSums},[transferDir filesep methodsList{i} 'OnlyDiffERP.txt'],'\t',{'sub','avgdiff','lower','upper'});
+    writeData({labelsTemp,yvalsTemp},[transferDir filesep methodsList{i} 'OnlyDiffERPAdjusted.txt'],'\t',{'sub','avgdiff'});
+    writeData({subLabels,subFluxStdSums},[transferDir filesep 'fourMethodsSubsStds' methodsList{i} 'Only.txt'],'\t',{'sub','std'});
+    printModel(bigModelReconc,convertArr(1,:,i),[transferDir filesep 'reducedFBABigModelReconc' methodsList{i} 'Flux.txt'],[transferDir filesep 'frequentMetsBigModelReconc' methodsList{i} 'Flux.txt']);
+    printModel(bigModelReconc,abs(convertArr(1,:,i)-convertArrObese(1,:,i)),[transferDir filesep 'reducedFBABigModelReconc' methodsList{i} 'DiffFlux.txt'],[transferDir filesep 'frequentMetsBigModelReconc' methodsList{i} 'DiffFlux.txt']);
+    printModel(bigModelReconc,methodstds,[transferDir filesep 'reducedFBABigModelReconc' methodsList{i} 'Stds.txt'],[transferDir filesep 'frequentMetsBigModelReconc' methodsList{i} 'Stds.txt']);
 end
-printModel(bigModelReconc,bigModelReconc.express,'/home/fs01/yw595/reducedFBABigModelReconcExpress.txt','/home/fs01/yw595/frequentMetsBigModelReconcExpress.txt');
+printModel(bigModelReconc,bigModelReconc.express,[transferDir filesep 'reducedFBABigModelReconcExpress.txt'],[transferDir filesep 'frequentMetsBigModelReconcExpress.txt']);
 
+labels = {}; yvals = []; grouplabels = {}; 
 for i=1:length(uniqSubs)
     for j=1:length(methodsList)
         labels{end+1} = [uniqSubs{i} '_' methodsList{j}];
@@ -156,8 +152,8 @@ for i=1:length(uniqSubs)
         grouplabels{end+1} = methodsList{j};
     end
 end
-writeData({labels,yvals,grouplabels},'/home/fs01/yw595/fourMethodsSubsStds.txt','\t',{'subsAndMethod','std','method'});
-
+writeData({labels,yvals,grouplabels},[transferDir filesep 'fourMethodsSubsStds.txt'],'\t',{'subsAndMethod','std','method'});
+end
 end
 
 if 0

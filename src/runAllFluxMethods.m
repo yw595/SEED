@@ -2,7 +2,7 @@ function normFluxes = runAllFluxMethods(model,expressionData,expressionSDs,expre
 
     fbasol = optimizeCbModel(model);
     fbafluxes = fbasol.x;
-    efluxes = runFluxMethod(expressionData,expressionIDs,'testeflux',model,'EFlux');
+    efluxes = zeros(length(model.rxns),1);%runFluxMethod(expressionData,expressionIDs,'testeflux',model,'EFlux');
     falconfluxes = runFluxMethod(expressionData,expressionIDs,'testfalcon',model,'FALCON',expressionSDs);
     gxfbafluxes = runFluxMethod(expressionData,expressionIDs,'testgxfba',model,'GXFBA');
     normFluxes(:,1) = fbafluxes;

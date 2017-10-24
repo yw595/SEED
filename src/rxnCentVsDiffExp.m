@@ -4,6 +4,8 @@ outputDir1 = [outputDir filesep 'rxnCentVsDiffExp'];
 if ~exist(outputDir1,'dir')
     mkdir(outputDir1);
 end
+
+%make binary rxnMatrix, reactions linked by mets, excluding union of topMetIdxs, most connected .001, and predefined excludeMets
 bigModel = bigModelAdded;
 connMatrixTable = makeConnMatrix(bigModel);
 rxnMatrix = zeros(length(bigModel.rxns),length(bigModel.rxns));
@@ -27,9 +29,8 @@ for i=1:length(bigModel.rxns)
         end
     end
 end
-disp('HERE')
+
 centsRxnTable = betweenness_centrality(sparse(rxnMatrix));
-disp('THERE')
 ECsToCents = containers.Map;
 for i=1:length(bigModel.rxnNames)
     rxnECs = bigModel.rxnECNums{i};
