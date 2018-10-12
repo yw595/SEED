@@ -90,9 +90,26 @@ end
 if exist([outputDir filesep 'readHMPTaxaData' filesep 'readHMPTaxaData.mat'],'file') && ~exist('closestFamiliesData','var')
     load([outputDir filesep 'readHMPTaxaData' filesep 'readHMPTaxaData.mat']);
 end
-
-
-
-
-
-
+if ~exist('AGORAMat','var')
+AGORAFiles = dir([inputDir filesep 'AGORAModels/Western-Diet-Paper']);
+AGORAMat = {};
+count = 0;
+for i = 1:length(AGORAFiles)
+    dotIdx = regexp(AGORAFiles(i).name,'\.');
+    if ~strcmp(AGORAFiles(i).name,'.') && ~strcmp(AGORAFiles(i).name,'..') && strcmp(AGORAFiles(i).name(dotIdx+1:end),'mat')
+        AGORAMat{end+1} = [inputDir filesep 'AGORAModels/Western-Diet-Paper' filesep AGORAFiles(i).name];
+    end
+end
+end
+if ~exist('ucrFolders','var')
+ucrFolders = dir([inputDir filesep 'MGMData']);
+ucrFoldersTemp = {};
+ucrNames = {};
+for z=1:length(ucrFolders)
+    if ~isempty(regexp(ucrFolders(z).name,'ucrC97')) && exist(['/mnt/vdb/home/ubuntu2/MATLAB/SEED/input/MGMData' filesep ucrFolders(z).name filesep 'normalized_otus.tsv'], 'file')
+	ucrFoldersTemp{end+1} = ucrFolders(z).name;
+        ucrNames{end+1} = ucrFolders(z).name(7:end);
+    end
+end
+ucrFolders = ucrFoldersTemp;
+end

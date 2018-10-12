@@ -1,6 +1,6 @@
 import subprocess
 
-inputFI1 = open('DavidS8.txt')
+#C:parse DavidS9, based on FIRST AND SECOND COORDS OF PCA??, assign cluster numbers to foundClusts 1 or 2
 inputFI2 = open('DavidS9.txt')
 foundTaxa = []
 foundClusts1 = []
@@ -14,6 +14,9 @@ for line in inputFI2:
     elif float(words[1]) > 0 and float(words[2]) < 0:
         foundClusts2.append(words[0])
 inputFI2.close()
+
+#C:parse DavidS8, find dot in taxonomic name, maybe single letter taxonomic rank abbrev, so strip off, or species name after, so append. Record currentClust number, tracking taxa in it and abunds, at switch to new currentClust, append maxTaxon to foundTaxa representatives of clusters, put in 1 or 2 if match foundClusts from above
+inputFI1 = open('DavidS8.txt')
 currentClust = ''
 currentTaxa = []
 currentAbunds = []
@@ -53,16 +56,15 @@ for line in inputFI1:
     #print(currentClust)
 inputFI1.close()
 
+#C:print all foundTaxa representatives of clusters, and those matching foundClusts 1 or 2
 outputFI = open('DavidTaxa.txt','w')
 for taxon in foundTaxa:
     outputFI.write(taxon + '\n')
 outputFI.close()
-
 outputFI = open('DavidTaxa1.txt','w')
 for taxon in foundTaxa1:
     outputFI.write(taxon + '\n')
 outputFI.close()
-
 outputFI = open('DavidTaxa2.txt','w')
 for taxon in foundTaxa2:
     outputFI.write(taxon + '\n')

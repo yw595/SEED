@@ -1,13 +1,11 @@
 import subprocess
 
+#C:parse fecalmicrobiome.txt, first column is HMDB, second is KEGG, so if just one entry with HMDB ID, download html page for a HMDB ID from hmdb 
 metIn = open('/home/fs01/yw595/MATLAB/SEED/input/fecalmicrobiome.txt')
 outFI = open('/home/fs01/yw595/MATLAB/SEED/input/fecalmicrobiomeauto.txt','w')
 inLines = []
 count = 0
 for line in metIn:
-    if count > 100:
-        #break
-        pass
     count = count+1
     line = line.strip()
     words = line.split('\t')
@@ -15,6 +13,8 @@ for line in metIn:
     if len(words)==1:
         proc = subprocess.Popen(['wget','www.hmdb.ca/metabolites/HMDB' + words[0],'-O','HMDB.html'])
         proc.wait()
+
+        #C:use downloadMetabolome.sh as grep wrapper to find whole line with KEGG ID, write line to KEGG.txt, get last five digits as KEGG ID, write out HMDB and KEGG IDs to fecalmicrobiomeauto.txt
         shFI = open('downloadMetabolome.sh','w')
         shFI.write('grep -Po "KEGG Compound ID(.)*C(\d)(\d)(\d)(\d)(\d)" HMDB.html > KEGG.txt')
         shFI.close()
@@ -30,5 +30,6 @@ for line in metIn:
     print(outline)
     outFI.write(outline + '\n')
 outFI.close()
-        #proc = subprocess.Popen(['grep','-Po','">C(\d)(\d)(\d)(\d)(\d)"','HMDB.html'])
-        #proc.wait()
+
+
+

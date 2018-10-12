@@ -1,5 +1,6 @@
 import subprocess
 
+#C:download and unzip otu_table from hmpdacc
 #proc = subprocess.Popen(['wget','ftp://public-ftp.hmpdacc.org/HMQCP/otu_table_v13.txt.gz'])
 #proc.wait()
 #proc = subprocess.Popen(['gunzip','otu_table_v13.txt.gz'])
@@ -17,9 +18,6 @@ familiesToAllAbunds = {}
 for line in inputFI:
     lineNo = lineNo+1
     print(lineNo)
-    if lineNo > 3000:
-        #break
-        pass
     words = line.split('\t')
     family = words[len(words)-1].split(';')
     family2 = family[len(family)-1]
@@ -65,9 +63,3 @@ fh2.close()
 for family in allEnds:
     fh.write(family)
 fh.close()
-
-
-
-
-
-

@@ -3,6 +3,7 @@ function fluxAssignModel = fluxModelFunc(origModel)
 fluxAssignModel = origModel;
 for i=1:length(fluxAssignModel.rxns)
     fluxAssignModel.rxns{i} = strrep(strrep(fluxAssignModel.rxns{i},')',''),'(','');
+    fluxAssignModel.rxns{i} = strrep(strrep(fluxAssignModel.rxns{i},']','_'),'[','_');
 end
 fluxAssignModel.genes = fluxAssignModel.rxns;
 fluxAssignModel.grRules = fluxAssignModel.rxns;

@@ -1,6 +1,6 @@
 configSEED;
 
-if 1
+if 0
 %configSEED;
 rxnsToExpressObeseKeys = keys(rxnsToExpressObese);
 
@@ -50,7 +50,7 @@ end
 if testNormObeseVector==1
     z1Lim = 11;
 end
-readERPHadzaXeno;
+%readERPHadzaXeno;
 
 for z1=1:z1Lim
     for z=1:zLim

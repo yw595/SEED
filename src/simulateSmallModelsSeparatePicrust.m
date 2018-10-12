@@ -1,3 +1,4 @@
+if 1
 configSEED;
 outputDir1 = [outputDir filesep 'simulateSmallModelsSeparatePicrust'];
 if ~exist(outputDir1,'dir')
@@ -15,6 +16,58 @@ for i=1:length(modelNames)
         modelNamesArr{end,2} = modelNames{j};
     end
 end
+
+flexibleBiomass = 1;
+    
+for i=1:length(modelNames)
+    model = modelNamesToModels(modelNames{i});
+    model.description = model.modelName;
+    model.rxnECNums = {};
+    for k=1:length(model.rxns)
+	model.rxnECNums{end+1} = {};
+    end
+    model = fluxModelFunc(model);
+    model = assignSortedBiom(model);
+
+    if flexibleBiomass
+        cIdxs = find(model.c);
+        for j=1:length(cIdxs)
+	    jthBiomMetIdxs = find(model.S(:,cIdxs(j))<0);
+            for k=1:length(jthBiomMetIdxs);
+                model = addReaction(model,['FLEX_BIOM_' model.mets{jthBiomMetIdxs(k)}],{model.mets{jthBiomMetIdxs(k)}},[-1],0,-1000,0);
+            end
+	    model.lb(cIdxs(j)) = 0;
+            model.ub(cIdxs(j)) = 0;
+        end
+    end
+
+    if ~all(model.c==0)
+	cIdxs = find(model.c);
+        someMistake = 0;
+        try
+	    if length(cIdxs)==1
+		pseudoFluxDist1 = pseudoMapPicrust(model,1,1,model.rxnNames{cIdxs});
+		pseudoFluxDist2 = pseudoMapPicrust(model,0,1,model.rxnNames{cIdxs});
+	    else
+		pseudoFluxDist1 = pseudoMapPicrust(model,1,1,model.rxnNames{cIdxs(1)});
+		pseudoFluxDist2 = pseudoMapPicrust(model,0,1,model.rxnNames{cIdxs(1)});
+	    end
+	catch
+	    someMistake = 1;
+	end
+    end
+
+    if someMistake==0 && ~all(isnan(pseudoFluxDist1)) && ~all(pseudoFluxDist1==0)
+        outFI = fopen([outputDir1 filesep num2str(i) 'SpeciesAlone.txt'],'w');
+	for k=1:length(pseudoFluxDist1)
+	    fprintf(outFI,sprintf('%f %f\n',pseudoFluxDist1(k),pseudoFluxDist2(k)));
+	end
+	fclose(outFI);
+    end
+end
+end
+
+if 0
 parfor z=1:length(modelNames)*length(modelNames)
     %parfor j=1:length(modelNames)
 	%z = 2*(i*length(modelNames)+j);
@@ -67,3 +120,4 @@ parfor z=1:length(modelNames)*length(modelNames)
     %end
 end
 %end
+end

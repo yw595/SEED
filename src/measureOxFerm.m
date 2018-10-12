@@ -1,39 +1,24 @@
-if 0
-%nadhIdxs = cellfun(@(x) ~isempty(regexp(x,'Nicotinamide|NADH')), mergedModel.metNames);
-%fadhIdxs = cellfun(@(x) ~isempty(regexp(x,'Nicotinamide|FADH')), mergedModel.metNames);
-
-fermentKEGGs = {'C00186','C00469'};%mergedModel.metKEGGs(nadhIdxs);
-oxKEGGs = {'C00007'};
-
 totalOxArr1 = [];
 totalOxArr2 = [];
 totalFermentArr1 = [];
 totalFermentArr2 = [];
-for z=1:length(modelNames)
-model1 = modelNamesToModels(modelNames{z});
-fermentRxnIdxs = [];
-oxRxnIdxs = [];
-for i=1:length(model1.rxns)
-    consumeMetKEGGs = model1.metKEGGs(model1.S(:,i)<0);
-    produceMetKEGGs = model1.metKEGGs(model1.S(:,i)>0);
-    if length(intersect(produceMetKEGGs,fermentKEGGs))>0 && length(intersect(consumeMetKEGGs,fermentKEGGs))==0
-        fermentRxnIdxs(end+1) = i;
-    end
-    if length(intersect(produceMetKEGGs,oxKEGGs))==0 && length(intersect(consumeMetKEGGs,oxKEGGs))>0
-        oxRxnIdxs(end+1) = i;
-    end
-end
-pseudoFlux1 = pseudoFluxDistArr1{z};
-pseudoFlux2 = pseudoFluxDistArr2{z};
-if length(pseudoFlux1)>0
-totalOxArr1(z) = sum(abs(pseudoFlux1(oxRxnIdxs)));
-totalOxArr2(z) = sum(abs(pseudoFlux2(oxRxnIdxs)));
-totalFermentArr1(z) = sum(abs(pseudoFlux1(fermentRxnIdxs)));
-totalFermentArr2(z) = sum(abs(pseudoFlux2(fermentRxnIdxs)));
-end
-end
-end
 
+for z=1:length(modelNames)
+    model1 = modelNamesToModels(modelNames{z});
+    if 0
+        pseudoFlux1 = pseudoFluxDistArr1{z};
+	pseudoFlux2 = pseudoFluxDistArr2{z};
+	if length(pseudoFlux1)>0
+	    [totalOx1 totalFerm1] = measureOxFermFunc(model1,pseudoFlux1);
+            [totalOx2 totalFerm2] = measureOxFermFunc(model1,pseudoFlux2);
+	    totalOxArr1(z) = totalOx1;
+	    totalOxArr2(z) = totalOx2;
+	    totalFermentArr1(z) = totalFerment1;
+	    totalFermentArr2(z) = totalFerment2;
+	end
+    end
+end
+	
 totalOxArr1Temp = totalOxArr1;
 nonzeroIdxs = find(totalOxArr1Temp~=0);
 for i=1:length(totalOxArr1Temp)

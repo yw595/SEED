@@ -1,3 +1,10 @@
-function biomass = picrustDetermineBiomass(model,fluxdist)
+function biomass = picrustDetermineBiomass(model,fluxdist,flexibleBiomass)
 
-  biomass = sum(abs(fluxdist( strcmp(model.subSystems,'Exchange') | strcmp(model.subSystems,'Transport') | strcmp(model.subSystems,'') )));
+if ~exist('flexibleBiomass','var')
+    flexibleBiomass = 0;
+end
+if flexibleBiomass
+  biomass = sum(abs(fluxdist( strcmp(model.subSystems,'FLEX_BIOM') )));
+else
+    biomass = sum(abs(fluxdist( strcmp(model.subSystems,'Exchange') | strcmp(model.subSystems,'Transport') | strcmp(model.subSystems,'') )));
+end

@@ -1,4 +1,4 @@
-function newModel = addMetSubsystems(origModel)
+mfunction newModel = addMetSubsystems(origModel)
 
 newModel = origModel;
 newModel.metSubsystems = {};

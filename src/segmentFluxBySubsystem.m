@@ -11,7 +11,11 @@ uniqSubs = unique(model.subSystems);
 subLabels = {}; subFluxSums = []; subFluxDiffSums = []; subFluxStdSums = []; subFluxDiffScaledSums = [];
 for j=1:length(uniqSubs)
     subLabels{end+1} = uniqSubs{j};
-    subFluxSums(end+1) = sum(fluxDist1(strcmp(model.subSystems,uniqSubs{j}))~=0);
+    if innerAbs==1
+        subFluxSums(end+1) = sum(abs(fluxDist1(strcmp(model.subSystems,uniqSubs{j}))));
+    else
+        subFluxSums(end+1) = sum(fluxDist1(strcmp(model.subSystems,uniqSubs{j})));
+    end
     if diffCond==1
         subFluxDiffSums(end+1) = abs(sum(fluxDist1(strcmp(model.subSystems,uniqSubs{j}))-fluxDist2(strcmp(model.subSystems,uniqSubs{j}))));
         if innerAbs
