@@ -7,6 +7,7 @@ from runCobraLPWithCvxopt import runCobraLPWithCvxopt
 from runCobraLPWithGLPK import runCobraLPWithGLPK
 from runCobraLPWithScipy import runCobraLPWithScipy
 from runCobraLPWithSWIGLPK import runCobraLPWithSWIGLPK
+from runCobraLPWithCobra import runCobraLPWithCobra
 import sys
 import numpy as np
 import scipy.sparse as sp
@@ -251,7 +252,7 @@ def falcon(m,r = [],r_sd = [],r_group = [],rc = 0,minFit = 0,LPmeth = 1,LPseed =
             insertFunc(NRowLab,s1,'ObjPrior')
         s1+=1
 
-        k = 0
+        k = -1
         r_group_visited = np.array([False for nrxn in range(nrxns)])
         first_r_group_visited = -1
         rGrpsPrev = rGrpsUsed
@@ -295,7 +296,7 @@ def falcon(m,r = [],r_sd = [],r_group = [],rc = 0,minFit = 0,LPmeth = 1,LPseed =
             if isinstance(cons1,np.ndarray) and len(cons1)==1:
                 cons1=int(cons1[0])
             if not boundsRev[k] and not r[k]==float('nan') and s > 0:
-                if first_r_group_visited <= 0:
+                if first_r_group_visited < 0:
                     first_r_group_visited = r_group[k]
                 if not r_group_visited[r_group[k]]:
                     r_group_visited[r_group[k]] = True
@@ -364,6 +365,10 @@ def falcon(m,r = [],r_sd = [],r_group = [],rc = 0,minFit = 0,LPmeth = 1,LPseed =
         if TESTING and fIter > 1 and abs(corrval) > 0:
             N[objPriorRow,nrxns+1] = rGrpsUsed*(corrval/rGrpsPrev)
 
+        for checkidx in range(len(r_group_visited)):
+            if not r_group_visited[checkidx]:
+                pass
+                #nonsense = nonsense+1
     if not np.all(sz_N == np.shape(N)) or sz_N[0] != np.size(b) or sz_N[1] != np.size(L):
         print('WARNING: mismatch in estimated and actual dimension detected!!!')
         dimFail = True
@@ -497,6 +502,7 @@ def easyLP(f,a,b,vlb,vub,csense,vbas,cbas,FDEBUG=False,ani='',aj=''):
     #nonsense = nonsense+1
     #nonsensepeasy = nonsensepeasy+1
     [solutionstat,solutionfull,solutionobj] = runCobraLPWithGLPK(a,b,f,vlb,vub,-1,csense,ani=ani,aj=aj)
+    #[solutionstat,solutionfull,solutionobj] = runCobraLPWithCobra(a,b,f,vlb,vub,-1,csense,ani=ani,aj=aj)
     if FDEBUG:
         t_easy = time.time()-t_easy
 

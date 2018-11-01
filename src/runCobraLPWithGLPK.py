@@ -2,6 +2,7 @@ import time
 import numpy as np
 import scipy.sparse
 import subprocess
+from testpython import *
 
 def runCobraLPWithGLPK(A,b,c,anLb,aUb,osense,csense,ani='',aj=''):
 
@@ -105,12 +106,14 @@ def runCobraLPWithGLPK(A,b,c,anLb,aUb,osense,csense,ani='',aj=''):
     outfile = '/mnt/vdb/home/ubuntu2/glpkout.txt'
     if ani!='' and aj!='':
         outfile = '/mnt/vdb/home/ubuntu2/glpkout_'+str(ani)+'_'+str(aj)+'.txt'
-    proc = subprocess.Popen(['glpsol','--lp',LPfile,'--tmlim','100','-o',outfile])
-    proc.wait()
-    inFI = open(outfile)
+    myFunction(LPfile,outfile)
+    #proc = subprocess.Popen(['glpsol','--lp',LPfile,'--tmlim','100','-o',outfile])
+    #proc.wait()
     xCount = 0
     xFlux = []
     status = 0
+    #return [1, [0 for cidx in range(len(c))], 0]
+    inFI = open(outfile)
     for line in inFI:
         words = line.strip().split()
         #print(words)

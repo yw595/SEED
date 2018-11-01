@@ -4,6 +4,7 @@ import math
 from scipy.stats import hypergeom
 import time
 import scipy
+import scipy.stats
 
 def writeData(dataarrs,outfile,headers=[],delimiter='\t'):
     outFI = open(outfile,'w')
@@ -146,6 +147,7 @@ def segmentFluxBySubsystemGroup(NormalIdxs,IBDIdxs,picrustFluxesArr,tobemergedrx
     subKeys = subDiffMapNormal.keys()
     subDiffArr = []
     subDiffArrNum = []
+    subDiffWilcPVals = []
     for i in range(len(subKeys)):
         subDiffArr.append(subKeys[i])
         subDiffArrNum.append(subDiffMapNormal[subKeys[i]]/len(NormalIdxs) - subDiffMapIBD[subKeys[i]]/len(IBDIdxs))

@@ -2,6 +2,7 @@ import time
 import numpy as np
 from bootstrapAGORAIBD import writeData
 import subprocess
+from testpython import *
 
 def computeMinDisj(model, genedata_filename, sigma=0,FDEBUG=True,overwriteSDs={},overwriteMeans={}):
     ztol = 1e-4
@@ -18,13 +19,34 @@ def computeMinDisj(model, genedata_filename, sigma=0,FDEBUG=True,overwriteSDs={}
         print('Filebase: ')
         print(rfname)
 
+    ruleFirstIdx = {}
+    cidx = -1
+    rxn_rule_group = [0 for nrxn in range(nrxns)]
+    #print(len(rxn_rule_group))
+    #print(len(model.grRules))
+    while cidx < nrxns-1:
+        cidx = cidx + 1
+        key = model.grRules[cidx].strip()
+        if len(key) > 0:
+            if key in ruleFirstIdx:
+                rxn_rule_group[cidx] = ruleFirstIdx[key]
+            else:
+                rxn_rule_group[cidx] = cidx
+                ruleFirstIdx[key] = cidx
+        else:
+            rxn_rule_group[cidx] = cidx
+
+    #return [np.array([1 for ruleidx in range(len(rxn_rule_group))]),np.array([1 for ruleidx in range(len(rxn_rule_group))]),rxn_rule_group]
+
+            
     print('minDisj HERE')
     #print(rfout)
     #print(genedata_filename)
-    rfoutFI = open(rfout,'w')
-    proc = subprocess.Popen(['/mnt/vdb/home/ubuntu2/minDisj',genedata_filename,rfname],stdout=rfoutFI)
-    status = proc.wait()
-    rfoutFI.close()
+    status = myOtherFunction(genedata_filename,rfname,rfout)
+    #rfoutFI = open(rfout,'w')
+    #proc = subprocess.Popen(['/mnt/vdb/home/ubuntu2/minDisj',genedata_filename,rfname],stdout=rfoutFI)
+    #status = proc.wait()
+    #rfoutFI.close()
     print('minDisj THERE')
     if status != 0:
         time.sleep(0.03)
@@ -51,23 +73,6 @@ def computeMinDisj(model, genedata_filename, sigma=0,FDEBUG=True,overwriteSDs={}
     if sigma > 0 and not FDEBUG:
         proc = subprocess.Popen(['rm',genedata_filename])
         proc.wait()
-
-    ruleFirstIdx = {}
-    cidx = -1
-    rxn_rule_group = [0 for nrxn in range(nrxns)]
-    #print(len(rxn_rule_group))
-    #print(len(model.grRules))
-    while cidx < nrxns-1:
-        cidx = cidx + 1
-        key = model.grRules[cidx].strip()
-        if len(key) > 0:
-            if key in ruleFirstIdx:
-                rxn_rule_group[cidx] = ruleFirstIdx[key]
-            else:
-                rxn_rule_group[cidx] = cidx
-                ruleFirstIdx[key] = cidx
-        else:
-            rxn_rule_group[cidx] = cidx
 
     tempFI = open(rfout)
     print(rfout)
