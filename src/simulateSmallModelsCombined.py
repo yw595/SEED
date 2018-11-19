@@ -66,7 +66,8 @@ class simulateSmallModelsCombinedClass(object):
         cobra.manipulation.delete.remove_genes(ithModel,unselectgenes)
         return ithModel
 
-    def __init__(self):
+    def __init__(self,diseaseType):
+        self.lock = multiprocessing.Lock()
         self.manager = multiprocessing.Manager()
         if False:
             self.AGORAModelArr = []#self.manager.list()
@@ -86,7 +87,7 @@ class simulateSmallModelsCombinedClass(object):
             self.AGORAModelArr = []#self.manager.list()
             self.AGORAModelArrTemp = []
             files = os.listdir('/mnt/vdb/home/ubuntu2/MATLAB/SEED/input/AGORAModels/Western-Diet-Paper')
-            for k in range(50):#len(files)):
+            for k in range(len(files)):
                 if files[k].endswith('.xml'):
                     self.AGORAModelArr.append([])    
         self.completedArr = [ [0 for ark in range(len(self.AGORAModelArr))] for ark in range(len(self.AGORAModelArr)) ]#np.zeros([len(self.AGORAModelArr),len(self.AGORAModelArr)])
@@ -112,7 +113,12 @@ class simulateSmallModelsCombinedClass(object):
             
         self.allSamples = []
         allSpecies = []
-        inFI = open('/mnt/vdb/home/ubuntu2/diabetesVec.txt')
+        if diseaseType=='diabetes':
+            inFI = open('/mnt/vdb/home/ubuntu2/diabetesVec.txt')
+        elif diseaseType=='IBD':
+            inFI = open('/mnt/vdb/home/ubuntu2/IBDVec.txt')
+        elif diseaseType=='normObese':
+            inFI = open('/mnt/vdb/home/ubuntu2/normObeseVec.txt')
         inFI.readline()
         for line in inFI:
             line = line.strip()
@@ -144,11 +150,40 @@ class simulateSmallModelsCombinedClass(object):
         inFI.close()
 
     def clearsumsums(self):
-        for k1 in range(len(self.AGORAModelArr)):
-            for k2 in range(len(self.AGORAModelArr)):
-                inFI = open('/mnt/vdb/home/ubuntu2/sumsum_'+str(k1)+'_'+str(k2)+'.txt','w')
-                inFI.write('0\n')
-                inFI.close()
+        self.lock.acquire()
+        inFI = open('/mnt/vdb/home/ubuntu2/sumsumall.txt','w')
+        inFI.write('0 0\n')
+        inFI.close()
+        self.lock.release()
+        # for k1 in range(len(self.AGORAModelArr)):
+        #     for k2 in range(len(self.AGORAModelArr)):
+        #         inFI = open('/mnt/vdb/home/ubuntu2/sumsum_'+str(k1)+'_'+str(k2)+'.txt','w')
+        #         inFI.write('0\n')
+        #         inFI.close()
+
+    def addOne(self):
+        self.lock.acquire()
+        inFI = open('/mnt/vdb/home/ubuntu2/sumsumall.txt')
+        lineval = inFI.readline().strip().split(' ')
+        num1s = int(lineval[0])
+        numneg1s = int(lineval[1])
+        inFI.close()
+        inFI = open('/mnt/vdb/home/ubuntu2/sumsumall.txt','w')
+        inFI.write(str(num1s+1)+' '+str(numneg1s)+'\n')
+        inFI.close()
+        self.lock.release()
+
+    def addNegOne(self):
+        self.lock.acquire()
+        inFI = open('/mnt/vdb/home/ubuntu2/sumsumall.txt')
+        lineval = inFI.readline().strip().split(' ')
+        num1s = int(lineval[0])
+        numneg1s = int(lineval[1])
+        inFI.close()
+        inFI = open('/mnt/vdb/home/ubuntu2/sumsumall.txt','w')
+        inFI.write(str(num1s)+' '+str(numneg1s+1)+'\n')
+        inFI.close()
+        self.lock.release()
         
     def runFunc2(self,i,j):
         print(str(i)+' '+str(j))
@@ -172,9 +207,10 @@ class simulateSmallModelsCombinedClass(object):
             jthModel = self.loadModelFromFile('/mnt/vdb/home/ubuntu2/MATLAB/SEED/input/AGORAModels/Western-Diet-Paper/'+filenames[j])
             pairmodel = self.createPairModel(ithModel,jthModel,i,j)
             cobra.io.write_sbml_model(pairmodel,'/mnt/vdb/home/ubuntu2/pairmodel_'+str(i)+'_'+str(j)+'.xml')
-        inFI = open('/mnt/vdb/home/ubuntu2/sumsum_'+str(i)+'_'+str(j)+'.txt','w')
-        inFI.write('1\n')
-        inFI.close()
+        self.addOne()
+        #inFI = open('/mnt/vdb/home/ubuntu2/sumsum_'+str(i)+'_'+str(j)+'.txt','w')
+        #inFI.write('1\n')
+        #inFI.close()
         
     def runFunc(self,z,i,j):
         print('start2')
@@ -197,7 +233,7 @@ class simulateSmallModelsCombinedClass(object):
             files = os.listdir('/mnt/vdb/home/ubuntu2/MATLAB/SEED/input/AGORAModels/Western-Diet-Paper')
             files.sort()
             filenames = []
-            for k in range(50):#len(files)):
+            for k in range(len(files)):
                 if files[k].endswith('.xml'):
                     filenames.append(files[k])
             if False:
@@ -206,10 +242,10 @@ class simulateSmallModelsCombinedClass(object):
             else:
                 print(filenames[i])
                 print(filenames[j])
-                #ithModel = self.loadModelFromFile('/mnt/vdb/home/ubuntu2/MATLAB/SEED/input/AGORAModels/Western-Diet-Paper/'+filenames[i])
-                #jthModel = self.loadModelFromFile('/mnt/vdb/home/ubuntu2/MATLAB/SEED/input/AGORAModels/Western-Diet-Paper/'+filenames[j])
-            #pairmodel = self.createPairModel(ithModel,jthModel,i,j)
-            pairmodel = self.loadModelFromFile('/mnt/vdb/home/ubuntu2/pairmodel_'+str(i)+'_'+str(j)+'.xml')
+                ithModel = self.loadModelFromFile('/mnt/vdb/home/ubuntu2/MATLAB/SEED/input/AGORAModels/Western-Diet-Paper/'+filenames[i])
+                jthModel = self.loadModelFromFile('/mnt/vdb/home/ubuntu2/MATLAB/SEED/input/AGORAModels/Western-Diet-Paper/'+filenames[j])
+            pairmodel = self.createPairModel(ithModel,jthModel,i,j)
+            #pairmodel = self.loadModelFromFile('/mnt/vdb/home/ubuntu2/pairmodel_'+str(i)+'_'+str(j)+'.xml')
 
             if passnot:
                 print(passnot)
@@ -253,12 +289,16 @@ class simulateSmallModelsCombinedClass(object):
                 writeData([v_falcon,pairexpr,rxnids],'/mnt/vdb/home/ubuntu2/MATLAB/SEED/output/simulateSmallModelsCombined/outputfile_'+self.allSamplesArr[z]+'_'+str(i)+'_'+str(j)+'.txt',delimiter='\t',headers=['flux','expr','rxnid'])
             print('start7')
         self.completedArr[i][j] = 1
-        inFI = open('/mnt/vdb/home/ubuntu2/sumsum_'+str(i)+'_'+str(j)+'.txt','w')
         if correctlyrun:
-            inFI.write('1\n')
+            self.addOne()
         else:
-            inFI.write('-1\n')
-        inFI.close()
+            self.addNegOne()
+        # inFI = open('/mnt/vdb/home/ubuntu2/sumsum_'+str(i)+'_'+str(j)+'.txt','w')
+        # if correctlyrun:
+        #     inFI.write('1\n')
+        # else:
+        #     inFI.write('-1\n')
+        # inFI.close()
 
     def printSummary(self):
         corr1 = []
@@ -314,60 +354,121 @@ class simulateSmallModelsCombinedClass(object):
                 self.tworxnsarr[i][j] = tworxns
 
     def readsumsum(self):
-        num1s = 0
-        numneg1s = 0
-        for k1 in range(len(self.AGORAModelArr)):
-            for k2 in range(len(self.AGORAModelArr)):
-                readvalue = ''
-                while readvalue=='':
-                    try:
-                        inFI = open('/mnt/vdb/home/ubuntu2/sumsum_'+str(k1)+'_'+str(k2)+'.txt')
-                        readvalue = inFI.readline().strip()
-                        inFI.close()
-                    except:
-                        print('some reading error')
-                if int(readvalue)==1:
-                    num1s = num1s+1
-                elif int(readvalue)==-1:
-                    numneg1s = numneg1s+1
+        self.lock.acquire()
+        inFI = open('/mnt/vdb/home/ubuntu2/sumsumall.txt')
+        lineval = inFI.readline().strip().split(' ')
+        num1s = int(lineval[0])
+        numneg1s = int(lineval[1])
+        inFI.close()
+        self.lock.release()
+        # num1s = 0
+        # numneg1s = 0
+        # for k1 in range(len(self.AGORAModelArr)):
+        #     for k2 in range(len(self.AGORAModelArr)):
+        #         readvalue = ''
+        #         while readvalue=='':
+        #             try:
+        #                 inFI = open('/mnt/vdb/home/ubuntu2/sumsum_'+str(k1)+'_'+str(k2)+'.txt')
+        #                 readvalue = inFI.readline().strip()
+        #                 inFI.close()
+        #             except:
+        #                 print('some reading error')
+        #         if int(readvalue)==1:
+        #             num1s = num1s+1
+        #         elif int(readvalue)==-1:
+        #             numneg1s = numneg1s+1
         return [num1s, numneg1s]
         
 if __name__ == '__main__':
-    obj = simulateSmallModelsCombinedClass()
-    #obj.runFunc(3,4)
-    #obj.createAllPairModels()
-    skipAlreadyRun = False
+    usage = "usage %prog [options] \n"
+    prog = "this prog"
+
+    parser = OptionParser(usage=usage)
+    parser.add_option("--diseaseType",help="")
+    parser.add_option("--sampleid",help="")
+    (opts,args) = parser.parse_args()
+    diseaseType = opts.diseaseType
+    sampleid = opts.sampleid
+    
+    obj = simulateSmallModelsCombinedClass(diseaseType)
+    skipAlreadyRun = True
     createPairModels = False
     if createPairModels:
-        sampleprefixes = 'createpairmodels'
+        sampleprefixes = ['createpairmodels']
     else:
-        sampleprefixes = obj.allSamplesArr[:1]
-    for z in range(len(sampleprefixes)):
+        sampleprefixes = [sampleid]#obj.allSamplesArr[:1]
+    for z1 in range(len(sampleprefixes)):
+        if createPairModels:
+            z = 0
+        else:
+            for i in range(len(obj.allSamplesArr)):
+                if sampleprefixes[z1]==obj.allSamplesArr[i]:
+                    z=i
         prlist = []
         for i in range(len(obj.AGORAModelArr)):
             for j in range(len(obj.AGORAModelArr)):
+                #print(len(obj.AGORAModelArr))
                 if (not skipAlreadyRun) or (sampleprefixes[z]!='createpairmodels' and not os.path.exists('/mnt/vdb/home/ubuntu2/glpkout_'+str(i)+'_'+str(j)+'.txt')) or (sampleprefixes[z]=='createpairmodels' and not os.path.exists('/mnt/vdb/home/ubuntu2/pairmodel_'+str(i)+'_'+str(j)+'.xml')):
                     if sampleprefixes[z]=='createpairmodels':
                         pr = multiprocessing.Process(target=obj.createAllPairModels, args=(i,j,))
                     else:
+                        #obj.runFunc(z,i,j)
                         pr = multiprocessing.Process(target=obj.runFunc, args=(z,i,j,))
                     prlist.append(pr)
 
-    obj.clearsumsums()
-    permuteidxs = np.random.permutation(len(prlist))
-    for i in range(len(permuteidxs)):
-        pr = prlist[permuteidxs[i]]
-        print('start')
-        pr.start()
+        obj.clearsumsums()
+        permuteidxs = np.random.permutation(len(prlist))
+        currenti = 0
         [num1s, numneg1s] = obj.readsumsum()
-        sumsum = num1s+numneg1s
-        if num1s>30:
-            break
-        while sumsum<i-8:
-            print('sleep')
-            print(sumsum)
-            print(i-8)
-            time.sleep(3)
-            [num1s, numneg1s] = obj.readsumsum()
-            sumsum = num1s+numneg1s
-    obj.clearsumsums()
+        savenum1s = num1s
+        randlimit = 100
+        numcores = 8
+        while savenum1s<=randlimit:
+            pass
+            freezeout = False
+            prevstart = time.time()
+            startints = []
+            for i in range(currenti+3,len(permuteidxs)):
+                if len(startints)>0 and np.mean(startints[max(0,len(startints)-100):len(startints)])>5:
+                    freezeout = True
+                    currenti = i
+                    print('mean')
+                    print(np.mean(startints[max(0,len(startints)-100):len(startints)]))
+                    #for k in range(i+1):
+                    #    prlist[permuteidxs[k]].terminate()
+                    obj.clearsumsums()
+                    savenum1s = num1s
+                if freezeout:
+                    break
+                currentstart = time.time()
+                pr = prlist[permuteidxs[i]]
+                startints.append(currentstart-prevstart)
+                prevstart = currentstart
+
+                print('start')
+                pr.start()
+                [num1s, numneg1s] = obj.readsumsum()
+                sumsum = num1s+numneg1s
+                if num1s>randlimit:
+                    break
+                    pass
+                time1 = time.time()
+                while sumsum<i-numcores:
+                    if freezeout:
+                        break
+                    time2 = time.time()
+                    if time2-time1>100:
+                        freezeout = True
+                        currenti = i
+                        #for k in range(i+1):
+                        #    prlist[permuteidxs[k]].terminate()
+                        obj.clearsumsums()
+                        savenum1s = num1s
+                    print('sleep')
+                    print(sumsum)
+                    print(i-numcores)
+                    print(time2-time1)
+                    time.sleep(3)
+                    [num1s, numneg1s] = obj.readsumsum()
+                    sumsum = num1s+numneg1s
+        obj.clearsumsums()

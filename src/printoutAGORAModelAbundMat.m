@@ -1,5 +1,5 @@
 if 1
-useDiabetes = 1;
+useDiabetes = 0;
 if useDiabetes
     taxonomy_profiles = importdata('/mnt/vdb/home/ubuntu2/taxonomyDiabetes.tsv');
     taxonomy_profilestemp = {};
@@ -89,13 +89,18 @@ for i=1:length(sampleNames)
     for j=1:length(AGORAMat)
 	sampleVec{end+1} = sampleNames{i};
 	AGORAName = strsplit(AGORAMat{j},'/');
-	AGORAName = strsplit(AGORAName{end},'_');
-	AGORAName = [AGORAName{1} ' ' AGORAName{2}];
+        AGORAName = strrep(AGORAName{end},'_',' ');
+	%AGORAName = strsplit(AGORAName{end},'_');
+	%AGORAName = [AGORAName{1} ' ' AGORAName{2}];
         speciesVec{end+1} = AGORAName;
         abundVec(end+1) = AGORAModelAbundMat(i,j);
     end
 end
-writeData({sampleVec,speciesVec,abundVec},'/mnt/vdb/home/ubuntu2/diabetesVec.txt','\t',{'sample','species','abund'});
+if useDiabetes
+    writeData({sampleVec,speciesVec,abundVec},'/mnt/vdb/home/ubuntu2/diabetesVec.txt','\t',{'sample','species','abund'});
+else
+    writeData({sampleVec,speciesVec,abundVec},'/mnt/vdb/home/ubuntu2/IBDVec.txt','\t',{'sample','species','abund'});
+end
 
 yokflux = runFluxMethod(ones(length(yok.rxns),1),yok.rxns,'',yok,'FALCON',ones(length(yok.rxns),1));
 compare1 = textscan(fopen('/mnt/vdb/home/ubuntu2/compareFALCONs.txt','%f'));
