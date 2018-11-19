@@ -3,7 +3,7 @@ import math
 from getBoundsRev import getBoundsRev
 import copy
 from runCobraLPWithOptlang import runCobraLPWithOptlang
-from runCobraLPWithCvxopt import runCobraLPWithCvxopt
+#from runCobraLPWithCvxopt import runCobraLPWithCvxopt
 from runCobraLPWithGLPK import runCobraLPWithGLPK
 from runCobraLPWithScipy import runCobraLPWithScipy
 from runCobraLPWithSWIGLPK import runCobraLPWithSWIGLPK

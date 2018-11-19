@@ -284,11 +284,11 @@ class simulateSmallModelsCombinedClass(object):
                 print(len(v_eflux))
                 if sum(abs(v_eflux))!=0:
                     correctlyrun = True
-                    writeData([v_eflux,ithExpr,rxnids],'/mnt/vdb/home/ubuntu2/MATLAB/SEED/output/simulateSmallModelsCombined/outputfile_'+self.allSamplesArr[z]+'_'+str(i)+'_eflux.txt',delimiter='\t',headers=['flux','expr','rxnid'])
+                    writeData([v_eflux,pairexpr,rxnids],'/mnt/vdb/home/ubuntu2/MATLAB/SEED/output/simulateSmallModelsCombined/outputfile_'+self.allSamplesArr[z]+'_'+str(i)+'_eflux.txt',delimiter='\t',headers=['flux','expr','rxnid'])
             else:
                 if sum(abs(v_falcon))!=0:
                     correctlyrun = True
-                    writeData([v_falcon,ithExpr,rxnids],'/mnt/vdb/home/ubuntu2/MATLAB/SEED/output/simulateSmallModelsCombined/outputfile_'+self.allSamplesArr[z]+'_'+str(i)+'.txt',delimiter='\t',headers=['flux','expr','rxnid'])
+                    writeData([v_falcon,pairexpr,rxnids],'/mnt/vdb/home/ubuntu2/MATLAB/SEED/output/simulateSmallModelsCombined/outputfile_'+self.allSamplesArr[z]+'_'+str(i)+'.txt',delimiter='\t',headers=['flux','expr','rxnid'])
             print('start7')
         if correctlyrun:
             self.addOne()
@@ -493,8 +493,7 @@ if __name__ == '__main__':
     obj = simulateSmallModelsCombinedClass(diseaseType)
     skipAlreadyRun = True
     createPairModels = False
-    letsrunEFlux = False
-    runSingleModels = True
+    letsrunEFlux = True
     if createPairModels:
         sampleprefixes = ['createpairmodels']
     else:
@@ -509,26 +508,13 @@ if __name__ == '__main__':
         prlist = []
         for i in range(len(obj.AGORAModelArr)):
             for j in range(len(obj.AGORAModelArr)):
-                relevantfile = ''
-                if sampleprefixes[0]=='createpairmodels':
-                    relevantfile = '/mnt/vdb/home/ubuntu2/pairmodel_'+str(i)+'_'+str(j)+'.xml'
-                else:
-                    if runSingleModels:
-                        relevantfile = '/mnt/vdb/home/ubuntu2/outputfile_'+obj.allSamplesArr[z]+'_'+str(i)
-                    else:
-                        relevantfile = '/mnt/vdb/home/ubuntu2/outputfile_'+obj.allSamplesArr[z]+'_'+str(i)+'_'+str(j)
-                    if letsrunEFlux:
-                        relevantfile += '_eflux.txt'
-                    else:
-                        relevantfile += '.txt'
-                if (not skipAlreadyRun) or (not os.path.exists(relevantfile)):
+                #print(len(obj.AGORAModelArr))
+                if (not skipAlreadyRun) or (sampleprefixes[0]!='createpairmodels' and not os.path.exists('/mnt/vdb/home/ubuntu2/glpkout_'+str(i)+'_'+str(j)+'.txt')) or (sampleprefixes[0]=='createpairmodels' and not os.path.exists('/mnt/vdb/home/ubuntu2/pairmodel_'+str(i)+'_'+str(j)+'.xml')):
                     if sampleprefixes[0]=='createpairmodels':
                         pr = multiprocessing.Process(target=obj.createAllPairModels, args=(i,j,))
                     else:
-                        if runSingleModels:
-                            pr = multiprocessing.Process(target=obj.runSingleModel, args=(z,i,letsrunEFlux))
-                        else:
-                            pr = multiprocessing.Process(target=obj.runFunc, args=(z,i,j,letsrunEFlux))
+                        #obj.runFunc(z,i,j)
+                        pr = multiprocessing.Process(target=obj.runFunc, args=(z,i,j,letsrunEFlux))
                     prlist.append(pr)
 
         obj.clearsumsums()

@@ -27,13 +27,7 @@ def convertIrrevFluxDistribution(fluxdist,modelIrrev):
 
     return [np.array(revfluxdist), irrev2rev, rev2irrev]
 
-def runFALCONStripped(model,expressionIDs,expData,expressionSDs,nReps,overwriteSDs={},overwriteMeans={},ani='',aj=''):
-    useMinDisj = True
-    expCon = False
-    minFit = 0.0
-    regC = 0.0
-    FDEBUG = False
-
+def makeModelIrrev(model):
     nrxns = len(model.reactions)
     cobra.manipulation.modify.convert_to_irreversible(model)
     modelIrrev = model
@@ -47,10 +41,61 @@ def runFALCONStripped(model,expressionIDs,expData,expressionSDs,nReps,overwriteS
             for gene in modelIrrev.reactions[i].genes:
                 if modelIrrev.genes[j].id==gene.id:
                     modelIrrev.rxnGeneMat[i,j]=1
+    return modelIrrev
+
+def runEFlux(model,expressionIDs,expData,expressionSDs,overwriteSDs={},overwriteMeans={},ani='',aj=''):
+    modelIrrev = makeModelIrrev(model)
+
+    genedata_filename = '/mnt/vdb/home/ubuntu2/temp.csv'
+    if ani!='' and aj!='':
+        genedata_filename = '/mnt/vdb/home/ubuntu2/temp_'+str(ani)+'_'+str(aj)+'.csv'
+    elif ani!='':
+        genedata_filename = '/mnt/vdb/home/ubuntu2/temp_'+str(ani)+'.csv'
+    writeData([expressionIDs,expData,expressionSDs],genedata_filename)
+    [rxn_exp_md, rxn_exp_sd_md, rxn_rule_group] = computeMinDisj(modelIrrev,genedata_filename,0,True,overwriteSDs,overwriteMeans)
+    #proc = subprocess.Popen(['rm',genedata_filename])
+    #proc.wait()
+
+    rxn_exp_md = np.array(rxn_exp_md)
+    rxn_exp_md = rxn_exp_md/sum(rxn_exp_md)
+    for i in range(len(rxn_exp_md)):
+        if np.isnan(rxn_exp_md[i]):
+            rxn_exp_md[i] = 1
+    for i in range(len(rxn_exp_md)):
+        if -rxn_exp_md[i]<0:
+            modelIrrev.reactions[i].lower_bound = -rxn_exp_md[i]
+        else:
+            modelIrrev.reactions[i].lower_bound = -1#np.mean(rxn_exp_md)
+        if rxn_exp_md[i]>0:
+            modelIrrev.reactions[i].upper_bound = rxn_exp_md[i]
+        else:
+            modelIrrev.reactions[i].upper_bound = 1#np.mean(rxn_exp_md)
+    biomassdict = {}
+    for i in range(len(modelIrrev.reactions)):
+        if modelIrrev.reactions[i].id.find('1_biomass')!=-1 or modelIrrev.reactions[i].id.find('2_biomass')!=-1:
+            modelIrrev.reactions[i].upper_bound = 1000
+            biomassdict[modelIrrev.reactions[i]] = 1
+    modelIrrev.objective = biomassdict
+    sol = modelIrrev.optimize()
+    v_efluxIrr = sol.fluxes
+    [v_eflux, irrev2rev, rev2irrev] = convertIrrevFluxDistribution(v_efluxIrr, modelIrrev)
+    return v_eflux
+
+def runFALCONStripped(model,expressionIDs,expData,expressionSDs,nReps,overwriteSDs={},overwriteMeans={},ani='',aj=''):
+    useMinDisj = True
+    expCon = False
+    minFit = 0.0
+    regC = 0.0
+    FDEBUG = False
+
+    modelIrrev = makeModelIrrev(model)
+
     expTime = time.time()
     genedata_filename = '/mnt/vdb/home/ubuntu2/temp.csv'
     if ani!='' and aj!='':
-        genedata_filename = '/mnt/vdb/home/ubuntu2/temp_'+str(i)+'_'+str(j)+'.csv'
+        genedata_filename = '/mnt/vdb/home/ubuntu2/temp_'+str(ani)+'_'+str(aj)+'.csv'
+    elif ani!='':
+        genedata_filename = '/mnt/vdb/home/ubuntu2/temp_'+str(ani)+'.csv'
     writeData([expressionIDs,expData,expressionSDs],genedata_filename)
     [rxn_exp_md, rxn_exp_sd_md, rxn_rule_group] = computeMinDisj(modelIrrev,genedata_filename,0,True,overwriteSDs,overwriteMeans)
     minDisjTime = time.time()-expTime

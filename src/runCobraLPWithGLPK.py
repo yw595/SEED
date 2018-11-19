@@ -9,6 +9,8 @@ def runCobraLPWithGLPK(A,b,c,anLb,aUb,osense,csense,ani='',aj=''):
     LPfile = '/mnt/vdb/home/ubuntu2/glpk.txt'
     if ani!='' and aj!='':
         LPfile = '/mnt/vdb/home/ubuntu2/glpk_'+str(ani)+'_'+str(aj)+'.txt'
+    elif ani!='':
+        LPfile = '/mnt/vdb/home/ubuntu2/glpk_'+str(ani)+'.txt'
     LPFI = open(LPfile,'w')
     LPFI.write('Maximize\n')
     objLine = '   obj:'
@@ -106,6 +108,8 @@ def runCobraLPWithGLPK(A,b,c,anLb,aUb,osense,csense,ani='',aj=''):
     outfile = '/mnt/vdb/home/ubuntu2/glpkout.txt'
     if ani!='' and aj!='':
         outfile = '/mnt/vdb/home/ubuntu2/glpkout_'+str(ani)+'_'+str(aj)+'.txt'
+    elif ani!='':
+        outfile = '/mnt/vdb/home/ubuntu2/glpkout_'+str(ani)+'.txt'
     myFunction(LPfile,outfile)
     #proc = subprocess.Popen(['glpsol','--lp',LPfile,'--tmlim','100','-o',outfile])
     #proc.wait()
